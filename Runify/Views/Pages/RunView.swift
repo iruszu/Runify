@@ -10,6 +10,7 @@ import AudioToolbox
 
 struct RunView: View {
     @EnvironmentObject var runTracker: RunTracker
+    @EnvironmentObject var coordinator: AppCoordinator
     
 
     var body: some View {
@@ -27,11 +28,11 @@ struct RunView: View {
                 
                 Spacer()
                 
-                VStack {
-                    Text("BPM")
-                    Text("BPM")
-                        .bold()
-                }
+//                VStack {
+//                    Text("BPM")
+//                    Text("BPM")
+//                        .bold()
+//                }
                 
                 Spacer()
                 
@@ -47,6 +48,11 @@ struct RunView: View {
             Spacer()
             Text(formatTime(seconds: runTracker.elapsedTime))
                 .font(.system(size: 64, weight: .bold))
+                .animation(.easeInOut(duration: 0.2), value: runTracker.elapsedTime)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
             Text("Time")
                 .foregroundStyle(.secondary)
             Spacer()
@@ -55,6 +61,7 @@ struct RunView: View {
                 Button {
                     print("stop")
                     runTracker.stopRun()
+                    coordinator.stopRun() // Use coordinator for navigation
                     AudioServicesPlayAlertSoundWithCompletion(SystemSoundID(kSystemSoundID_Vibrate)) { }
                 } label: {
                     Image(systemName: "stop.fill")
@@ -65,6 +72,7 @@ struct RunView: View {
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
+                .glassEffect()
                 
                 Spacer()
                 
@@ -85,9 +93,12 @@ struct RunView: View {
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
+                .glassEffect()
             }
+            .padding(.horizontal, 30)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Color(.systemGray6))
 
 
         
@@ -99,4 +110,5 @@ struct RunView: View {
 #Preview {
     RunView()
         .environmentObject(RunTracker())
+        .environmentObject(AppCoordinator())
 }

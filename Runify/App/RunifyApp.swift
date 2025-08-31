@@ -6,12 +6,16 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct RunifyApp: App {
     var body: some Scene {
         WindowGroup {
-            HomeView()
+            MainTabView()
+                .preferredColorScheme(.dark) // Force dark mode always
         }
+        .modelContainer(for: Run.self)
+        
     }
 }

@@ -9,8 +9,10 @@ import SwiftUI
 
 struct CountDownView: View {
     @EnvironmentObject var runTracker: RunTracker
+    @EnvironmentObject var coordinator: AppCoordinator
     @StateObject private var countdownTimer = TimerManager()
     @State var countdown: Int = 3
+    
     var body: some View {
         Text("\(countdown)")
             .font(.system(size: 256, weight: .regular, design: .default))
@@ -31,9 +33,9 @@ struct CountDownView: View {
                 countdown -= 1
             } else {
                 countdownTimer.stopTimer()
-                // Handle countdown completion here, e.g., navigate to another view
-                runTracker.presentCountdown = false
+                // Use coordinator for navigation
                 runTracker.startRun()
+                coordinator.countdownFinished()
             }
         }
     }

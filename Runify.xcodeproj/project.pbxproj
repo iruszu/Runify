@@ -6,6 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ABC6A4792E5C194300368B59 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A4782E5C194300368B59 /* Auth */; };
+		ABC6A47B2E5C194300368B59 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A47A2E5C194300368B59 /* Functions */; };
+		ABC6A47D2E5C194300368B59 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A47C2E5C194300368B59 /* PostgREST */; };
+		ABC6A47F2E5C194300368B59 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A47E2E5C194300368B59 /* Realtime */; };
+		ABC6A4812E5C194300368B59 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A4802E5C194300368B59 /* Storage */; };
+		ABC6A4832E5C194300368B59 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = ABC6A4822E5C194300368B59 /* Supabase */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		ABA9E1522E53F72000138E08 /* Runify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -23,6 +32,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABC6A47D2E5C194300368B59 /* PostgREST in Frameworks */,
+				ABC6A47B2E5C194300368B59 /* Functions in Frameworks */,
+				ABC6A4832E5C194300368B59 /* Supabase in Frameworks */,
+				ABC6A4792E5C194300368B59 /* Auth in Frameworks */,
+				ABC6A4812E5C194300368B59 /* Storage in Frameworks */,
+				ABC6A47F2E5C194300368B59 /* Realtime in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -65,6 +80,12 @@
 			);
 			name = Runify;
 			packageProductDependencies = (
+				ABC6A4782E5C194300368B59 /* Auth */,
+				ABC6A47A2E5C194300368B59 /* Functions */,
+				ABC6A47C2E5C194300368B59 /* PostgREST */,
+				ABC6A47E2E5C194300368B59 /* Realtime */,
+				ABC6A4802E5C194300368B59 /* Storage */,
+				ABC6A4822E5C194300368B59 /* Supabase */,
 			);
 			productName = Runify;
 			productReference = ABA9E1522E53F72000138E08 /* Runify.app */;
@@ -94,6 +115,9 @@
 			);
 			mainGroup = ABA9E1492E53F72000138E08;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = ABA9E1532E53F72000138E08 /* Products */;
 			projectDirPath = "";
@@ -249,60 +273,76 @@
 		ABA9E15E2E53F72200138E08 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Runify;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Runify;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lumenoAI.Runify;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
 		ABA9E15F2E53F72200138E08 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = Runify;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Runify;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.lumenoAI.Runify;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -328,6 +368,50 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = exactVersion;
+				version = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		ABC6A4782E5C194300368B59 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		ABC6A47A2E5C194300368B59 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		ABC6A47C2E5C194300368B59 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		ABC6A47E2E5C194300368B59 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		ABC6A4802E5C194300368B59 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		ABC6A4822E5C194300368B59 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = ABC6A44A2E5C12C000368B59 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = ABA9E14A2E53F72000138E08 /* Project object */;
 }

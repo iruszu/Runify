@@ -8,22 +8,22 @@
 import Foundation
 import SwiftUI
 import MapKit
+import SwiftData
 
 
 class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var region = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
     
     @Published var isRunning = false // Track if the user is currently running
-    @Published var presentCountdown = false // Controls the countdown view presentation
     @Published var distance: Double = 0.0 // Track the distance run
     @Published var pace = 0.0
     @Published var elapsedTime = 0.0 // Track the elapsed time of the run
-    @Published var presentRunView = false
+    private var modelContext: ModelContext? 
     
     // Location tracking
     private var locationManager: CLLocationManager?
-    private var startLocation: CLLocation?
-    private var lastLocation: CLLocation?
+     var startLocation: CLLocation?
+     var lastLocation: CLLocation?
     
     private let timerManager = TimerManager()
     
@@ -42,9 +42,12 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         }
     }
     
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
+    }
+    
     // When the user starts a run, we want to start tracking their location
     func startRun() {
-        presentRunView = true
         startLocation = nil // Reset start location because a new run is starting
         lastLocation = nil // Reset last location
         isRunning = true // Set running state to true
@@ -91,7 +94,23 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         locationManager?.stopUpdatingLocation() // Stop updating location when the run stops
         timerManager.stopTimer()
         isRunning = false
-        presentRunView = false // Hide the run view when the run stops
+        
+        // Create a Coordinate object from the start location
+        let startCoordinate = startLocation.map { Coordinate($0.coordinate) }
+        
+        let completedRun = Run(
+            locationName: "Current Location",
+            date: Date(),
+            distance: distance,
+            duration: elapsedTime,
+            pace: pace,
+            startLocation: startCoordinate
+        )
+        
+        if let context = modelContext {
+            context.insert(completedRun)
+            try? context.save()
+        }
     }
      
     
