@@ -20,21 +20,26 @@ struct MainTabView: View {
                 HomeView()
                     .environmentObject(runTracker)
             }
-            Tab("Statistics", systemImage: "bar.chart.fill") {
+            Tab("Statistics", systemImage: "chart.line.uptrend.xyaxis") {
                 
             }
+
             Tab("Map", systemImage: "map", role: .search) {
                 MapView()
                     .environmentObject(coordinator)
                     .environmentObject(runTracker)
-                }
+            }
+            Tab("Profile", systemImage: "person.circle") {
+                ProfileView()
+                    .environmentObject(runTracker)
+            }
             
             }
-        .fullScreenCover(isPresented: $coordinator.showRun, content: {
-            RunView()
+        .fullScreenCover(isPresented: $coordinator.showRunningMap) {
+            RunningMapView()
                 .environmentObject(runTracker)
                 .environmentObject(coordinator)
-        })
+        }
         .transaction { transaction in
             transaction.disablesAnimations = true // Disable animations for the transition
         }
@@ -50,13 +55,11 @@ struct MainTabView: View {
         })
         .tabViewBottomAccessory {
             Button(action: {
-                coordinator.showCountdown.toggle() // Use coordinator for navigation
+                coordinator.showCountdown = true // Start countdown
             }, label: {
                 Text("Start")
                 Image(systemName: "figure.run")
-
             })
-                
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .onAppear {
