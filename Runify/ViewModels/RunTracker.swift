@@ -12,7 +12,9 @@ import SwiftData
 
 
 class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
+    //MKCoordinateSpan defines how much of the map should be visible
     @Published var region = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+    @Published var staticRegion = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))) // Static region for MapView
     
     @Published var isRunning = false // Track if the user is currently running
     @Published var distance: Double = 0.0 // Track the distance run
@@ -22,8 +24,10 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     // Location tracking
     private var locationManager: CLLocationManager?
-     var startLocation: CLLocation?
-     var lastLocation: CLLocation?
+    @Published var startLocation: CLLocation?
+    @Published var lastLocation: CLLocation?
+    @Published var locations: [CLLocation] = [] // Array to store all location points for route drawing
+    @Published var mapStyle: MapStyle = .standard // Shared map style for all map views
     
     private let timerManager = TimerManager()
     
@@ -35,6 +39,7 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
             await MainActor.run {
                 // Sets up location manager for tracking
                 locationManager = CLLocationManager()
+                // delegate is an object that handles events on behalf of another object, so it sends its location to this class (RunTracker)
                 locationManager?.delegate = self
                 locationManager?.requestWhenInUseAuthorization()
                 locationManager?.startUpdatingLocation() // Start updating location
@@ -46,10 +51,12 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         self.modelContext = context
     }
     
+    
     // When the user starts a run, we want to start tracking their location
     func startRun() {
         startLocation = nil // Reset start location because a new run is starting
         lastLocation = nil // Reset last location
+        locations = [] // Clear previous route
         isRunning = true // Set running state to true
         
         distance = 0.0 // Reset distance
@@ -128,13 +135,16 @@ extension RunTracker {
             //update region to the user's current location
             await MainActor.run {
                 
-                // Recreate the region with the new location
+                // Always update the region to follow user's location
                 region = .region(
                     MKCoordinateRegion(
                         center: location.coordinate,
                         span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
                     )
                 )
+                
+                // Add location to route array for drawing
+                self.locations.append(location)
                 
                 // Checks if this is the first location update
                 if startLocation == nil {

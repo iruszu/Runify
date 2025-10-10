@@ -6,6 +6,7 @@ enum AppRoute {
     case countdown
     case run
     case runSummary
+    case runningMap
 }
 
 class AppCoordinator: ObservableObject {
@@ -16,6 +17,7 @@ class AppCoordinator: ObservableObject {
     @Published var showCountdown = false
     @Published var showRun = false
     @Published var showRunSummary = false
+    @Published var showRunningMap = false
     
     // Navigation methods
     func navigateToCountdown() {
@@ -25,8 +27,8 @@ class AppCoordinator: ObservableObject {
     
     func countdownFinished() {
         showCountdown = false
-        currentRoute = .run
-        showRun = true
+        currentRoute = .runningMap
+        showRunningMap = true
     }
     
     func startRun() {
@@ -35,7 +37,7 @@ class AppCoordinator: ObservableObject {
     }
     
     func stopRun() {
-        showRun = false
+        showRunningMap = false
         currentRoute = .runSummary
         showRunSummary = true
     }
@@ -62,5 +64,6 @@ class AppCoordinator: ObservableObject {
         showCountdown = false
         showRun = false
         showRunSummary = false
+        showRunningMap = false
     }
 }
