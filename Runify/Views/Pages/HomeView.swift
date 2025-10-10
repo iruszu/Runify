@@ -42,15 +42,14 @@ struct HomeView: View {
                         LazyHStack(spacing: 16) {
                             ForEach(runs, id: \.id) { run in
                                 RunSummaryCard(run: run)
-                                
-                                    .frame(width: 350, height: 600)
+
                                     .shadow(color: .black.opacity(0.8), radius: 15, x: 0, y: 8)
-                                    .scrollTransition { content, phase in
-                                        content
-                                            .opacity(phase.isIdentity ? 1.0 : 0.0)
-                                            .scaleEffect(x: phase.isIdentity ? 0.9 : 0.3, y: phase.isIdentity ? 0.9 : 0.3)
-                                            .offset(y: phase.isIdentity ? 0 : 50)
-                                    }
+//                                    .scrollTransition { content, phase in
+//                                        content
+//                                            .opacity(phase.isIdentity ? 1.0 : 0.0)
+//                                            .scaleEffect(x: phase.isIdentity ? 0.9 : 0.3, y: phase.isIdentity ? 0.9 : 0.3)
+//                                            .offset(y: phase.isIdentity ? 0 : 50)
+//                                    }
                             }
                         }
                         .scrollTargetLayout()

@@ -39,25 +39,7 @@ struct MapView: View {
                 
                 
             }
-    
-            .fullScreenCover(isPresented: $coordinator.showRun, content: {
-                RunView()
-                    .environmentObject(runTracker)
-                    .environmentObject(coordinator)
-            })
-            .transaction { transaction in
-                transaction.disablesAnimations = true // Disable animations for the transition
-            }
-            .fullScreenCover(isPresented: $coordinator.showCountdown, content: {
-                CountDownView()
-                    .environmentObject(runTracker) // Pass the RunTracker to the countdown view
-                    .environmentObject(coordinator)
-            })
-            .fullScreenCover(isPresented: $coordinator.showRunSummary, content: {
-                RunSummaryView()
-                    .environmentObject(runTracker)
-                    .environmentObject(coordinator)
-            })
+
             
            
         }

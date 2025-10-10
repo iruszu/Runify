@@ -23,28 +23,27 @@ struct MainTabView: View {
                 MapView()
                     .environmentObject(coordinator)
                     .environmentObject(runTracker)
-            }
-        
-        }
-        
-                .fullScreenCover(isPresented: $coordinator.showRun, content: {
-                    RunView()
-                        .environmentObject(runTracker)
-                        .environmentObject(coordinator)
-                })
-                .transaction { transaction in
-                    transaction.disablesAnimations = true // Disable animations for the transition
                 }
-                .fullScreenCover(isPresented: $coordinator.showCountdown, content: {
-                    CountDownView()
-                        .environmentObject(runTracker) // Pass the RunTracker to the countdown view
-                        .environmentObject(coordinator)
-                })
-                .fullScreenCover(isPresented: $coordinator.showRunSummary, content: {
-                    RunSummaryView()
-                        .environmentObject(runTracker)
-                        .environmentObject(coordinator)
-                })
+            
+            }
+        .fullScreenCover(isPresented: $coordinator.showRun, content: {
+            RunView()
+                .environmentObject(runTracker)
+                .environmentObject(coordinator)
+        })
+        .transaction { transaction in
+            transaction.disablesAnimations = true // Disable animations for the transition
+        }
+        .fullScreenCover(isPresented: $coordinator.showCountdown, content: {
+            CountDownView()
+                .environmentObject(runTracker) // Pass the RunTracker to the countdown view
+                .environmentObject(coordinator)
+        })
+        .fullScreenCover(isPresented: $coordinator.showRunSummary, content: {
+            RunSummaryView()
+                .environmentObject(runTracker)
+                .environmentObject(coordinator)
+        })
         .tabViewBottomAccessory {
             Button(action: {
                 coordinator.showCountdown.toggle() // Use coordinator for navigation
