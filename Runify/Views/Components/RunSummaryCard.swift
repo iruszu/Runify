@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 
 struct RunSummaryCard: View {
+    @State private var showingEditSheet = false
     let run: Run
 
     var body: some View {
@@ -14,6 +15,117 @@ struct RunSummaryCard: View {
         }
         .clipShape(RoundedRectangle(cornerRadius: 32))
         .shadow(radius: 8)
+        .onTapGesture {
+            showingEditSheet = true
+        }
+        .sheet(isPresented: $showingEditSheet) {
+            RunEditSheet(run: run)
+                .presentationDetents([.fraction(0.3)]) // Adjust the height as needed
+                .preferredColorScheme(.dark)
+        }
+        
+    }
+}
+
+struct RunEditSheet: View {
+    let run: Run
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.modelContext) private var modelContext
+    @State private var editedTitle: String
+    
+    // Initialize with current title
+    init(run: Run) {
+        self.run = run
+        self._editedTitle = State(initialValue: run.locationName)
+    }
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Editable title section
+                    VStack(spacing: 12) {
+                        Text("Run Title")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        TextField("Enter run title", text: $editedTitle)
+                            .font(.title2)
+                            .padding(.horizontal)
+                    }
+                    
+                    // Run date (read-only)
+                    VStack(spacing: 8) {
+                        Text("Date")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        
+                        Text(run.formattedDate)
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    
+                    
+                    Spacer()
+                }
+                .padding()
+            }
+            .navigationTitle("Edit Run")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        saveChanges()
+                        dismiss()
+                    }
+                    .disabled(editedTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+    
+    private func saveChanges() {
+        // Update the run using the new update method
+        run.update(locationName: editedTitle.trimmingCharacters(in: .whitespacesAndNewlines))
+        
+        // Save to Swift Data
+        try? modelContext.save()
+    }
+}
+
+
+
+struct MetricCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundColor(.blue)
+            
+            Text(value)
+                .font(.title2)
+                .fontWeight(.bold)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color(.secondarySystemBackground))
+        .cornerRadius(12)
     }
 }
 
@@ -69,16 +181,6 @@ struct MapSnapshotView: View {
 struct RunDataView: View {
     let run: Run
     
-    private func formatDistance(_ distance: Double) -> String {
-        if distance >= 1000 {
-            // Convert to kilometers for distances >= 1km
-            let km = distance / 1000
-            return String(format: "%.2f", km)
-        } else {
-            // Show meters for distances < 1km
-            return String(format: "%.0f", distance)
-        }
-    }
     
 
     
@@ -98,9 +200,9 @@ struct RunDataView: View {
             
             // Run Metrics
             HStack(spacing: 20) {
-                MetricView(label: "Distance", value: formatDistance(run.distance), unit: run.distance >= 1000 ? "km" : "m")
+                MetricView(label: "Distance", value: run.formattedDistance, unit: nil)
                 MetricView(label: "Time", value: run.formattedTime, unit: nil)
-                MetricView(label: "Pace", value: String(format: "%.1f", run.pace), unit: "min/km")
+                MetricView(label: "Pace", value: run.formattedPace, unit: nil)
             }
             
         }
