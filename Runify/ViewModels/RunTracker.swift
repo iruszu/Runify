@@ -107,7 +107,8 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
             startLocation: startCoordinate
         )
         
-        if let context = modelContext {
+        // Only save valid runs
+        if completedRun.isValid, let context = modelContext {
             context.insert(completedRun)
             try? context.save()
         }
