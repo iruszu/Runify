@@ -40,6 +40,12 @@ struct RunSummaryView: View {
                     icon: "speedometer"
                 )
                 
+                SummaryCard(
+                    title: "Avg Speed",
+                    value: String(format: "%.1f km/h", runTracker.distance > 0 ? (runTracker.distance / 1000.0) / (runTracker.elapsedTime / 3600.0) : 0),
+                    icon: "gauge"
+                )
+                
                 // Map showing run location
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Location")
