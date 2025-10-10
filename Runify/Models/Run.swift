@@ -1,26 +1,37 @@
 //
-//  RunDTO.swift
+//  Run.swift
 //  Runify
 //
 //  Created by Kellie Ho on 2025-08-30.
 //
 
-
 import Foundation
 import SwiftData
 import MapKit
 
+/// Represents a completed running session with location and performance data
 @Model
 final class Run {
+    // MARK: - Properties
+    
     @Attribute(.unique) var id: UUID
     var locationName: String
     var date: Date
     var distance: Double // in meters
-    var duration: TimeInterval
+    var duration: TimeInterval // in seconds
     var pace: Double // min/km
-    var startLocation: Coordinate? // Starting location of the run
+    var startLocation: Coordinate?
     
-    init(locationName: String, date: Date, distance: Double, duration: TimeInterval, pace: Double, startLocation: Coordinate? = nil) {
+    // MARK: - Initialization
+    
+    init(
+        locationName: String,
+        date: Date = Date(),
+        distance: Double,
+        duration: TimeInterval,
+        pace: Double,
+        startLocation: Coordinate? = nil
+    ) {
         self.id = UUID()
         self.locationName = locationName
         self.date = date
@@ -30,7 +41,9 @@ final class Run {
         self.startLocation = startLocation
     }
     
-    // Keep your existing computed properties
+    // MARK: - Computed Properties
+    
+    /// Formatted date string for display
     var formattedDate: String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
@@ -38,41 +51,142 @@ final class Run {
         return formatter.string(from: date)
     }
     
+    /// Formatted time duration for display
     var formattedTime: String {
         let hours = Int(duration) / 3600
         let minutes = Int(duration) % 3600 / 60
+        let seconds = Int(duration) % 60
+        
         if hours > 0 {
-            return minutes > 0 ? "\(hours) hour \(minutes) min" : "\(hours) hour"
+            return String(format: "%d:%02d:%02d", hours, minutes, seconds)
         } else {
-            return "\(minutes) min"
+            return String(format: "%d:%02d", minutes, seconds)
+        }
+    }
+    
+    /// Distance in kilometers
+    var distanceInKilometers: Double {
+        distance / 1000.0
+    }
+    
+    /// Distance in miles
+    var distanceInMiles: Double {
+        distance * 0.000621371
+    }
+    
+    /// Average speed in km/h
+    var averageSpeed: Double {
+        guard duration > 0 else { return 0 }
+        return (distance / 1000.0) / (duration / 3600.0)
+    }
+    
+    /// Average speed in mph
+    var averageSpeedInMPH: Double {
+        averageSpeed * 0.621371
+    }
+    
+    /// Pace in minutes per mile
+    var paceInMinutesPerMile: Double {
+        pace * 1.60934
+    }
+    
+    /// Formatted distance string with appropriate units
+    var formattedDistance: String {
+        if distance >= 1000 {
+            return String(format: "%.2f km", distanceInKilometers)
+        } else {
+            return String(format: "%.0f m", distance)
+        }
+    }
+    
+    /// Formatted pace string
+    var formattedPace: String {
+        String(format: "%.1f min/km", pace)
+    }
+    
+    /// Formatted average speed string
+    var formattedAverageSpeed: String {
+        String(format: "%.1f km/h", averageSpeed)
+    }
+    
+    // MARK: - Validation
+    
+    /// Validates if the run data is reasonable
+    var isValid: Bool {
+        return distance > 0 &&
+               duration > 0 &&
+               pace > 0 &&
+               !locationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    // MARK: - Utility Methods
+    
+    /// Updates the run with new data
+    func update(
+        locationName: String? = nil,
+        distance: Double? = nil,
+        duration: TimeInterval? = nil,
+        pace: Double? = nil,
+        startLocation: Coordinate? = nil
+    ) {
+        if let locationName = locationName {
+            self.locationName = locationName
+        }
+        if let distance = distance {
+            self.distance = distance
+        }
+        if let duration = duration {
+            self.duration = duration
+        }
+        if let pace = pace {
+            self.pace = pace
+        }
+        if let startLocation = startLocation {
+            self.startLocation = startLocation
         }
     }
 }
 
+// MARK: - Coordinate Model
 
-
-
-
-
-// Coordinate also needs to be a Swift Data model
+/// Represents a geographical coordinate
 @Model
 final class Coordinate {
     var latitude: Double
     var longitude: Double
+    
+    // MARK: - Initialization
     
     init(latitude: Double, longitude: Double) {
         self.latitude = latitude
         self.longitude = longitude
     }
     
-    // Convenience initializer from CLLocationCoordinate2D
+    /// Convenience initializer from CLLocationCoordinate2D
     init(_ coordinate: CLLocationCoordinate2D) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
     }
     
-    // Convert back to CLLocationCoordinate2D
+    // MARK: - Computed Properties
+    
+    /// Convert back to CLLocationCoordinate2D
     var clCoordinate: CLLocationCoordinate2D {
         CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+    
+    /// Check if coordinate is valid
+    var isValid: Bool {
+        return latitude >= -90 && latitude <= 90 &&
+               longitude >= -180 && longitude <= 180
+    }
+    
+    // MARK: - Utility Methods
+    
+    /// Calculate distance to another coordinate in meters
+    func distance(to other: Coordinate) -> Double {
+        let location1 = CLLocation(latitude: latitude, longitude: longitude)
+        let location2 = CLLocation(latitude: other.latitude, longitude: other.longitude)
+        return location1.distance(from: location2)
     }
 }
