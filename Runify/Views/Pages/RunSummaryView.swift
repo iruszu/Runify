@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct RunSummaryView: View {
     @EnvironmentObject var runTracker: RunTracker
@@ -46,27 +47,60 @@ struct RunSummaryView: View {
                     icon: "gauge"
                 )
                 
-                // Map showing run location
+                // Map showing complete run route
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Location")
+                    Text("Route")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     
-                    if let startLocation = runTracker.startLocation {
-                        RunLocationMapView(run: Run(
-                            locationName: "Current Run",
-                            date: Date(),
-                            distance: runTracker.distance,
-                            duration: runTracker.elapsedTime,
-                            pace: runTracker.pace,
-                            startLocation: Coordinate(startLocation.coordinate)
-                        ))
+                    if !runTracker.locations.isEmpty {
+                        Map {
+                            // Show the complete route
+                            if runTracker.locations.count > 1 {
+                                let coordinates = runTracker.locations.map { $0.coordinate }
+                                let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+                                MapPolyline(polyline)
+                                    .stroke(.orange, lineWidth: 4)
+                            }
+                            
+                            // Show start marker
+                            if let startLocation = runTracker.startLocation {
+                                Annotation("Start", coordinate: startLocation.coordinate) {
+                                    Image(systemName: "play.circle.fill")
+                                        .foregroundColor(.green)
+                                        .font(.title2)
+                                        .background(.white)
+                                        .clipShape(Circle())
+                                }
+                            }
+                            
+                            // Show end marker
+                            if let lastLocation = runTracker.lastLocation {
+                                Annotation("Finish", coordinate: lastLocation.coordinate) {
+                                    Image(systemName: "flag.checkered")
+                                        .foregroundColor(.red)
+                                        .font(.title2)
+                                        .background(.white)
+                                        .clipShape(Circle())
+                                }
+                            }
+                        }
+                        .mapStyle(runTracker.mapStyle)
+                        .frame(height: 200)
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color(.systemGray4), lineWidth: 1)
+                        )
                     } else {
-                        Text("No location data available")
+                        Text("No route data available")
                             .font(.caption)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
                             .padding()
+                            .frame(height: 200)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(12)
                     }
                 }
             }

@@ -2,19 +2,19 @@ import SwiftUI
 import MapKit
 
 struct RunSummaryCard: View {
+    @EnvironmentObject var runTracker: RunTracker
     @State private var showingEditSheet = false
     let run: Run
 
     var body: some View {
         ZStack() {
             // Map Section (Top 2/3)
-            MapSnapshotView(snapshot: nil, run: run)
+            MapSnapshotView(snapshot: nil, run: run, mapStyle: runTracker.mapStyle)
             
             // Run Data Section (Bottom 1/3)
             RunDataView(run: run)
         }
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(radius: 8)
         .onTapGesture {
             showingEditSheet = true
         }
@@ -133,6 +133,7 @@ struct MetricCard: View {
 struct MapSnapshotView: View {
     let snapshot: UIImage?
     let run: Run
+    let mapStyle: MapStyle
 
     
     var body: some View {
@@ -145,6 +146,7 @@ struct MapSnapshotView: View {
                     Marker("Start", coordinate: startLocation.clCoordinate)
                         .tint(.green)
                 }
+                .mapStyle(mapStyle)
 
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
@@ -171,7 +173,7 @@ struct MapSnapshotView: View {
                  .blendMode(.multiply)
             }
         }
-        .frame(height: 450) // Adjusted height
+        .frame(height: 400) // Reduced height
         .clipShape(RoundedRectangle(cornerRadius: 16))
 
     }
@@ -185,30 +187,32 @@ struct RunDataView: View {
 
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
             // Run Title and Date
             VStack(alignment: .leading, spacing: 4) {
                 Text(run.locationName)
-                    .font(.title2)
+                    .font(.title)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
+                    .shadow(radius: 4)
                 
                 Text(run.formattedDate)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.white)
+                    .shadow(radius: 4)
             }
             
             // Run Metrics
-            HStack(spacing: 15) {
+            HStack(spacing: 12) {
                 MetricView(label: "Distance", value: run.formattedDistance, unit: nil)
                 MetricView(label: "Time", value: run.formattedTime, unit: nil)
                 MetricView(label: "Pace", value: run.formattedPace, unit: nil)
             }
             
         }
-        .padding(.top, 250) // Reduced overlap for shorter card
+        .padding(.top, 250) // Move content to bottom of card
+        .padding(.leading, -20)
         .frame(maxWidth: .infinity, alignment: .center) // Center the content
-        .padding(.horizontal, 20) // Add horizontal padding for better spacing
    
     }
 }
@@ -222,7 +226,8 @@ struct MetricView: View {
         VStack(alignment: .center, spacing: 4) { // Center align the metrics
             Text(label)
                 .font(.caption)
-                .foregroundColor(.secondary)
+                .foregroundColor(.white)
+                .shadow(radius: 4)
             
             Text(value + (unit != nil ? " \(unit!)" : ""))
                 .font(.title2)
