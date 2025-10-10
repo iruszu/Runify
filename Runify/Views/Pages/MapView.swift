@@ -11,14 +11,16 @@ import MapKit
 struct MapView: View {
     @EnvironmentObject var runTracker: RunTracker
     @EnvironmentObject var coordinator: AppCoordinator
+    @State private var hasInitialized = false
 
     var body: some View {
         NavigationStack {
             ZStack (alignment: .bottom) {
-                Map(position: $runTracker.region) {
-                    UserAnnotation()
+            Map(position: $runTracker.staticRegion) {
+                UserAnnotation()
 
                 }
+                .mapStyle(runTracker.mapStyle)
                 .ignoresSafeArea(edges: .bottom)
 
                 
@@ -39,13 +41,42 @@ struct MapView: View {
                 
                 
             }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Menu {
+                        Button("Standard") {
+                            runTracker.mapStyle = .standard
+                        }
+                        Button("Imagery") {
+                            runTracker.mapStyle = .imagery
+                        }
+                        Button("Hybrid") {
+                            runTracker.mapStyle = .hybrid
+                        }
+                    } label: {
+                        Image(systemName: "map")
+                            .foregroundColor(.primary)
+                    }
+                }
+            }
 
             
            
         }
-        .padding(.top, -150)
-        .toolbar(.hidden, for: .navigationBar)
-        .ignoresSafeArea(edges: .top)
+        .padding(.top, -50)
+        .onAppear {
+            // Center on user's current location when view first appears
+            if !hasInitialized, let lastLocation = runTracker.lastLocation {
+                runTracker.staticRegion = .region(
+                    MKCoordinateRegion(
+                        center: lastLocation.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
+                    )
+                )
+                hasInitialized = true
+            }
+        }
+  
 
         
     }
