@@ -25,15 +25,6 @@ struct RunView: View {
                     Text("Distance")
                         .bold()
                 }
-                
-                Spacer()
-                
-//                VStack {
-//                    Text("BPM")
-//                    Text("BPM")
-//                        .bold()
-//                }
-                
                 Spacer()
                 
                 VStack {
@@ -68,7 +59,7 @@ struct RunView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.white)
                         .padding(36)
-                        .background(.black)
+                        .background(Color(.systemBackground))
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
@@ -89,7 +80,7 @@ struct RunView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.white)
                         .padding(36)
-                        .background(.black)
+                        .background(Color(.systemBackground))
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }

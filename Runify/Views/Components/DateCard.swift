@@ -19,23 +19,24 @@ struct DateCard: View {
     var body: some View {
         HStack {
             Text(formatDate(date))
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
             
             Spacer()
             
             Image(systemName: "calendar")
-                .foregroundColor(.black)
+                .foregroundColor(.primary)
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 16)
-        .background(.gray)
+        .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 32))
         .glassEffect()
+        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 
 #Preview {
     DateCard(date: Date())
         .padding()
-        .background(Color(red: 0.078, green: 0.078, blue: 0.078))
+        .background(Color(.systemBackground))
 }

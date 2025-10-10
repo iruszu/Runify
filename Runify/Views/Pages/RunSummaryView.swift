@@ -17,7 +17,7 @@ struct RunSummaryView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
                 .foregroundColor(.primary)
-                .background(.black)
+                .background(Color(.systemBackground))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
             

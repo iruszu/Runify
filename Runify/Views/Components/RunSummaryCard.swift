@@ -13,7 +13,7 @@ struct RunSummaryCard: View {
             // Run Data Section (Bottom 1/3)
             RunDataView(run: run)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 32))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .shadow(radius: 8)
         .onTapGesture {
             showingEditSheet = true
@@ -171,7 +171,7 @@ struct MapSnapshotView: View {
                  .blendMode(.multiply)
             }
         }
-        .frame(height: 580) // Adjust based on your needs
+        .frame(height: 450) // Adjusted height
         .clipShape(RoundedRectangle(cornerRadius: 16))
 
     }
@@ -185,7 +185,7 @@ struct RunDataView: View {
 
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // Run Title and Date
             VStack(alignment: .leading, spacing: 4) {
                 Text(run.locationName)
@@ -199,16 +199,16 @@ struct RunDataView: View {
             }
             
             // Run Metrics
-            HStack(spacing: 20) {
+            HStack(spacing: 15) {
                 MetricView(label: "Distance", value: run.formattedDistance, unit: nil)
                 MetricView(label: "Time", value: run.formattedTime, unit: nil)
                 MetricView(label: "Pace", value: run.formattedPace, unit: nil)
             }
             
         }
-        .padding(.top, 410) // Adjust to overlap on map
-        .frame(maxWidth: .infinity, alignment: .leading) // Make it take full width and align left
-        .padding(.leading, 20) // Add left padding to move content away from edge
+        .padding(.top, 250) // Reduced overlap for shorter card
+        .frame(maxWidth: .infinity, alignment: .center) // Center the content
+        .padding(.horizontal, 20) // Add horizontal padding for better spacing
    
     }
 }
@@ -219,7 +219,7 @@ struct MetricView: View {
     let unit: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) { // Changed from default center to .leading
+        VStack(alignment: .center, spacing: 4) { // Center align the metrics
             Text(label)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -246,5 +246,5 @@ struct MetricView: View {
     
     RunSummaryCard(run: sampleRun)
         .padding()
-        .background(Color.black)
+        .background(Color(.systemBackground))
 }

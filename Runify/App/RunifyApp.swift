@@ -13,7 +13,7 @@ struct RunifyApp: App {
     var body: some Scene {
         WindowGroup {
             MainTabView()
-                .preferredColorScheme(.dark) // Force dark mode always
+
         }
         .modelContainer(for: Run.self)
         
