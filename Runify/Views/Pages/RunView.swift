@@ -11,6 +11,7 @@ import AudioToolbox
 struct RunView: View {
     @EnvironmentObject var runTracker: RunTracker
     @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(\.colorScheme) var colorScheme
     
 
     var body: some View {
@@ -19,36 +20,32 @@ struct RunView: View {
                 Spacer()
                 
                 VStack {
+                    
                     Text("\(runTracker.distance, specifier: "%.2f") m")
-                        
-                        
                     Text("Distance")
-                        .bold()
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(colorScheme == .light ? .black : .white)
+                        .shadow(radius: 3)
+                        .textCase(.uppercase)
                 }
                 Spacer()
                 
                 VStack {
                     Text("\(runTracker.pace, specifier: "%.2f") min/km")
-                        
                     Text("Pace")
-                        .bold()
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundColor(colorScheme == .light ? .black : .white)
+                        .shadow(radius: 3)
+                        .textCase(.uppercase)
                 }
                 
                 Spacer()
             }
-            Spacer()
-            Text(formatTime(seconds: runTracker.elapsedTime))
-                .font(.system(size: 64, weight: .bold))
-                .animation(.easeInOut(duration: 0.2), value: runTracker.elapsedTime)
-                .transition(.asymmetric(
-                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                    removal: .move(edge: .top).combined(with: .opacity)
-                ))
-            Text("Time")
-                .foregroundStyle(.secondary)
-            Spacer()
-            
+            .padding(.top, 20)
+  
+
             HStack {
+                // Stop button on the left
                 Button {
                     print("stop")
                     runTracker.stopRun()
@@ -57,9 +54,9 @@ struct RunView: View {
                 } label: {
                     Image(systemName: "stop.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(.white)
-                        .padding(36)
-                        .background(Color(.systemBackground))
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(24)
+                        .background(Color.gray.opacity(0.5))
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
@@ -67,6 +64,7 @@ struct RunView: View {
                 
                 Spacer()
                 
+                // Pause/Resume button in the middle
                 Button {
                     if runTracker.isRunning {
                         print("pause")
@@ -78,9 +76,26 @@ struct RunView: View {
                 } label: {
                     Image(systemName: runTracker.isRunning ? "pause.fill" : "play.fill")
                         .font(.largeTitle)
-                        .foregroundStyle(.white)
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(36)
-                        .background(Color(.systemBackground))
+                        .background(Color.gray.opacity(0.5))
+                        .clipShape(Circle())
+                        .contentShape(Circle())
+                }
+                .glassEffect()
+                
+                Spacer()
+                
+                // Placeholder button on the right
+                Button {
+                    print("placeholder button tapped")
+                    // Add functionality here
+                } label: {
+                    Image(systemName: "plus")
+                        .font(.largeTitle)
+                        .foregroundStyle(colorScheme == .light ? .black : .white)
+                        .padding(24)
+                        .background(Color.gray.opacity(0.5))
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
@@ -89,7 +104,7 @@ struct RunView: View {
             .padding(.horizontal, 30)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color(.systemGray6))
+        .background(Color(.systemBackground).opacity(0.9)) // Adaptive background with transparency
 
 
         

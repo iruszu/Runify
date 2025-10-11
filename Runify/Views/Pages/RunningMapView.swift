@@ -16,7 +16,7 @@ struct RunningMapView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-            // Full-screen map with route tracking
+                // Full-screen map with route tracking
             Map(position: $runTracker.region) {
                 UserAnnotation()
                 
@@ -42,9 +42,18 @@ struct RunningMapView: View {
             .mapStyle(runTracker.mapStyle)
             .ignoresSafeArea()
             
+            // Time display at the top
+            VStack {
+                FlipClockView(time: runTracker.elapsedTime)
+                    .padding(.top, -30)
+            
+                
+                Spacer()
+            }
+
         }
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button("Standard") {
                         runTracker.mapStyle = .standard
@@ -65,7 +74,7 @@ struct RunningMapView: View {
             RunView()
                 .environmentObject(runTracker)
                 .environmentObject(coordinator)
-                .presentationDetents([.fraction(0.3), .medium])
+                .presentationDetents([.fraction(0.2), .medium])
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled(true) // Cannot dismiss the sheet
                 .presentationBackgroundInteraction(.enabled) // Make background transparent/not dimmed
@@ -76,6 +85,115 @@ struct RunningMapView: View {
                 runTracker.startRun()
             }
         }
+        }
+    }
+    
+    // Helper function to format time
+    private func formatTime(seconds: Double) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = Int(seconds) % 3600 / 60
+        let secs = Int(seconds) % 60
+        
+        if hours > 0 {
+            return String(format: "%d:%02d:%02d", hours, minutes, secs)
+        } else {
+            return String(format: "%d:%02d", minutes, secs)
+        }
+    }
+}
+
+// MARK: - Flip Clock Component
+struct FlipClockView: View {
+    let time: Double
+    @State private var previousTime: Double = 0
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            // Hours
+            FlipDigitView(
+                value: hours,
+                previousValue: previousHours,
+                label: "HOURS"
+            )
+            
+
+            // Minutes
+            FlipDigitView(
+                value: minutes,
+                previousValue: previousMinutes,
+                label: "MINUTES"
+            )
+            
+            
+            // Seconds
+            FlipDigitView(
+                value: seconds,
+                previousValue: previousSeconds,
+                label: "SECONDS"
+            )
+        }
+        .onAppear {
+            previousTime = time
+        }
+        .onChange(of: time) { _, newTime in
+            withAnimation(.easeInOut(duration: 0.3)) {
+                previousTime = time
+            }
+        }
+    }
+    
+    private var hours: Int {
+        Int(time) / 3600
+    }
+    
+    private var minutes: Int {
+        Int(time) % 3600 / 60
+    }
+    
+    private var seconds: Int {
+        Int(time) % 60
+    }
+    
+    private var previousHours: Int {
+        Int(previousTime) / 3600
+    }
+    
+    private var previousMinutes: Int {
+        Int(previousTime) % 3600 / 60
+    }
+    
+    private var previousSeconds: Int {
+        Int(previousTime) % 60
+    }
+}
+
+struct FlipDigitView: View {
+    let value: Int
+    let previousValue: Int
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 4) {
+            ZStack {
+                // Background container
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.black.opacity(0.5))
+                    .frame(width: 60, height: 80)
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                
+                // Current value - no animation, just updates
+                Text(String(format: "%02d", value))
+                    .font(.system(size: 32, weight: .bold, design: .monospaced))
+                    .foregroundColor(.white)
+            }
+            
+            // Label
+            Text(label)
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.white.opacity(0.7))
+                .shadow(radius: 3)
+                .textCase(.uppercase)
+
         }
     }
 }
