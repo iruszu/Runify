@@ -23,21 +23,6 @@ struct MapView: View {
                 .mapStyle(runTracker.mapStyle)
                 .ignoresSafeArea(edges: .bottom)
 
-                
-                Button {
-                    coordinator.navigateToCountdown() // Use coordinator for navigation
-                } label: {
-                    Image(systemName: "figure.run")
-                        .font(.system(size: 50, weight: .bold))
-                        .foregroundStyle(.white)
-                        .padding(50)
-                        .glassEffect() // Apply glass effect here, before clipping
-                        .clipShape(Circle())
-
-                }
-                .padding(.bottom, 30)
-                
-                
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
