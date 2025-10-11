@@ -41,7 +41,7 @@ struct RunView: View {
                 
                 Spacer()
             }
-            .padding(.top, 20)
+            .padding(.top, 30)
   
 
             HStack {
