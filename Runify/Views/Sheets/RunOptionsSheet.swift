@@ -60,7 +60,7 @@ struct RunOptionsSheet: View {
                         isGoSelected = true
                         selectedRoute = nil
                     }) {
-                        HStack {
+                        HStack(spacing: 16) {
                             Image(systemName: "figure.run")
                                 .font(.title2)
                                 .foregroundColor(.accentColor)
@@ -85,15 +85,14 @@ struct RunOptionsSheet: View {
                             }
                         }
                         .padding(.horizontal, 20)
-     
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(isGoSelected && selectedRoute == nil ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
                         )
                     }
-                    .padding(.horizontal, 20)
                     .buttonStyle(PlainButtonStyle())
+                    .padding(.horizontal, 20)
                     
                     // Recommended routes section
                     VStack(alignment: .leading, spacing: 12) {
@@ -115,6 +114,7 @@ struct RunOptionsSheet: View {
                                 }
                             }
                             .padding(.leading, 20)
+                            
                         
                         }
                     }
