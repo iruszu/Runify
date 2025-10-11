@@ -12,6 +12,7 @@ struct RunningMapView: View {
     @EnvironmentObject var runTracker: RunTracker
     @EnvironmentObject var coordinator: AppCoordinator
     @State private var showRunSheet = true // Auto-show RunView sheet
+    @State private var showMapSelection = false
     
     var body: some View {
         NavigationStack {
@@ -54,21 +55,17 @@ struct RunningMapView: View {
         }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Button("Standard") {
-                        runTracker.mapStyle = .standard
-                    }
-                    Button("Imagery") {
-                        runTracker.mapStyle = .imagery
-                    }
-                    Button("Hybrid") {
-                        runTracker.mapStyle = .hybrid
-                    }
-                } label: {
+                Button(action: {
+                    showMapSelection = true
+                }) {
                     Image(systemName: "map")
                         .foregroundColor(.primary)
                 }
             }
+        }
+        .sheet(isPresented: $showMapSelection) {
+            MapSelectionSheet()
+                .environmentObject(runTracker)
         }
         .sheet(isPresented: $showRunSheet) {
             RunView()
