@@ -74,7 +74,7 @@ struct RunningMapView: View {
             RunView()
                 .environmentObject(runTracker)
                 .environmentObject(coordinator)
-                .presentationDetents([.fraction(0.2), .medium])
+                .presentationDetents([.fraction(0.25), .medium])
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled(true) // Cannot dismiss the sheet
                 .presentationBackgroundInteraction(.enabled) // Make background transparent/not dimmed
