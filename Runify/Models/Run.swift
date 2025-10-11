@@ -21,6 +21,7 @@ final class Run {
     var duration: TimeInterval // in seconds
     var pace: Double // min/km
     var startLocation: Coordinate?
+    var locations: [Coordinate] // Route coordinates
     
     // MARK: - Initialization
     
@@ -30,7 +31,8 @@ final class Run {
         distance: Double,
         duration: TimeInterval,
         pace: Double,
-        startLocation: Coordinate? = nil
+        startLocation: Coordinate? = nil,
+        locations: [Coordinate] = []
     ) {
         self.id = UUID()
         self.locationName = locationName
@@ -39,6 +41,7 @@ final class Run {
         self.duration = duration
         self.pace = pace
         self.startLocation = startLocation
+        self.locations = locations
     }
     
     // MARK: - Computed Properties
@@ -127,7 +130,8 @@ final class Run {
         distance: Double? = nil,
         duration: TimeInterval? = nil,
         pace: Double? = nil,
-        startLocation: Coordinate? = nil
+        startLocation: Coordinate? = nil,
+        locations: [Coordinate]? = nil
     ) {
         if let locationName = locationName {
             self.locationName = locationName
@@ -143,6 +147,9 @@ final class Run {
         }
         if let startLocation = startLocation {
             self.startLocation = startLocation
+        }
+        if let locations = locations {
+            self.locations = locations
         }
     }
 }

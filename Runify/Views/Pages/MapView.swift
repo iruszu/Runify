@@ -27,17 +27,15 @@ struct MapView: View {
                 Button {
                     coordinator.navigateToCountdown() // Use coordinator for navigation
                 } label: {
-                    Text("Start")
-                        .bold()
-                        .font(.title)
+                    Image(systemName: "figure.run")
+                        .font(.system(size: 50, weight: .bold))
                         .foregroundStyle(.white)
-                        .padding(60)
-                        .background(.blue)
+                        .padding(50)
                         .glassEffect() // Apply glass effect here, before clipping
                         .clipShape(Circle())
-                        .contentShape(Circle())
+
                 }
-                .padding(.bottom, 50)
+                .padding(.bottom, 30)
                 
                 
             }

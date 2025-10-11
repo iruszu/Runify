@@ -47,11 +47,11 @@ struct HomeView: View {
                             LazyHStack(spacing: 20) {
                                 ForEach(runs, id: \.id) { run in
                                     RunSummaryCard(run: run)
-                                        .frame(width: 350) // Increased width for bigger cards
+                                        .frame(width: 300) // Card width reduced by 50px
                                 }
                             }
                             .scrollTargetLayout()
-                            .padding(.horizontal, (UIScreen.main.bounds.width - 350) / 2) // Center the first card with new width
+                            .padding(.horizontal, (UIScreen.main.bounds.width - 300) / 2) // Center the first card with new width
                         }
                         .scrollTargetBehavior(.viewAligned)
                         .frame(height: 450) // Fixed height for horizontal scroll

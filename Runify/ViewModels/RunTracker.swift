@@ -105,23 +105,68 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Create a Coordinate object from the start location
         let startCoordinate = startLocation.map { Coordinate($0.coordinate) }
         
-        let completedRun = Run(
-            locationName: "Current Location",
-            date: Date(),
-            distance: distance,
-            duration: elapsedTime,
-            pace: pace,
-            startLocation: startCoordinate
-        )
+        // Convert CLLocation array to Coordinate array
+        let routeCoordinates = locations.map { Coordinate($0.coordinate) }
         
-        // Only save valid runs
-        if completedRun.isValid, let context = modelContext {
-            context.insert(completedRun)
-            try? context.save()
+        // Get location name using reverse geocoding
+        getLocationName(from: startLocation) { locationName in
+            let completedRun = Run(
+                locationName: locationName,
+                date: Date(),
+                distance: self.distance,
+                duration: self.elapsedTime,
+                pace: self.pace,
+                startLocation: startCoordinate,
+                locations: routeCoordinates
+            )
+            
+            // Only save valid runs
+            if completedRun.isValid, let context = self.modelContext {
+                context.insert(completedRun)
+                try? context.save()
+            }
         }
     }
-     
     
+    // MARK: - Reverse Geocoding
+    
+    private func getLocationName(from location: CLLocation?, completion: @escaping (String) -> Void) {
+        guard let location = location else {
+            completion("Unknown Location")
+            return
+        }
+        
+        let geocoder = CLGeocoder()
+        geocoder.reverseGeocodeLocation(location) { placemarks, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    print("Reverse geocoding error: \(error.localizedDescription)")
+                    completion("Unknown Location")
+                    return
+                }
+                
+                guard let placemark = placemarks?.first else {
+                    completion("Unknown Location")
+                    return
+                }
+                
+                // Try to get a meaningful location name
+                var locationName = "Unknown Location"
+                
+                if let name = placemark.name {
+                    locationName = name
+                } else if let thoroughfare = placemark.thoroughfare {
+                    locationName = thoroughfare
+                } else if let locality = placemark.locality {
+                    locationName = locality
+                } else if let administrativeArea = placemark.administrativeArea {
+                    locationName = administrativeArea
+                }
+                
+                completion(locationName)
+            }
+        }
+    }
 }
 
 // MARK: Location Tracking
