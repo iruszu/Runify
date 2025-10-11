@@ -12,6 +12,7 @@ struct MainTabView: View {
     @State var selectedTab = 0
     @StateObject private var coordinator = AppCoordinator()
     @StateObject private var runTracker = RunTracker()
+    @State private var showRunOptions = false
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
@@ -55,11 +56,25 @@ struct MainTabView: View {
         })
         .tabViewBottomAccessory {
             Button(action: {
-                coordinator.showCountdown = true // Start countdown
+                showRunOptions = true
             }, label: {
-                Text("Start")
-                Image(systemName: "figure.run")
+                HStack(spacing: 8) {
+                    Image(systemName: "figure.run")
+                        .font(.title2)
+                        .foregroundColor(.white)
+                    
+                    Text("Start Run")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                }
+
             })
+        }
+        .sheet(isPresented: $showRunOptions) {
+            RunOptionsSheet()
+                .environmentObject(coordinator)
+                .presentationBackground(.clear)
         }
         .tabBarMinimizeBehavior(.onScrollDown)
         .onAppear {
