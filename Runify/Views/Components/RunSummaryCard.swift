@@ -14,7 +14,7 @@ struct RunSummaryCard: View {
             // Run Data Section (Bottom 1/3)
             RunDataView(run: run)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular.tint(.black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
         .onTapGesture {
             showingEditSheet = true
         }
@@ -50,8 +50,7 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .glassEffect(.regular.tint(.blue.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

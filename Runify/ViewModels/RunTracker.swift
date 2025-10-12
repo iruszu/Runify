@@ -10,6 +10,45 @@ import SwiftUI
 import MapKit
 import SwiftData
 
+enum MapStyleOption: String, CaseIterable {
+    case standard = "Standard"
+    case imagery = "Imagery"
+    case hybrid = "Hybrid"
+    
+    var mapStyle: MapStyle {
+        switch self {
+        case .standard:
+            return .standard
+        case .imagery:
+            return .imagery
+        case .hybrid:
+            return .hybrid
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .standard:
+            return "Classic road map with labels"
+        case .imagery:
+            return "Satellite imagery view"
+        case .hybrid:
+            return "Satellite with road labels"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .standard:
+            return "map"
+        case .imagery:
+            return "globe"
+        case .hybrid:
+            return "map.fill"
+        }
+    }
+}
+
 
 class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     //MKCoordinateSpan defines how much of the map should be visible
@@ -28,6 +67,7 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var lastLocation: CLLocation?
     @Published var locations: [CLLocation] = [] // Array to store all location points for route drawing
     @Published var mapStyle: MapStyle = .standard // Shared map style for all map views
+    @Published var mapStyleOption: MapStyleOption = .standard // Track the selected map style option
     
     private let timerManager = TimerManager()
     

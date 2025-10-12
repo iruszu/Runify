@@ -42,10 +42,11 @@ struct RunView: View {
                 Spacer()
             }
             .padding(.top, 30)
-  
-
+            
+            
             HStack {
                 // Stop button on the left
+                Spacer()
                 Button {
                     print("stop")
                     runTracker.stopRun()
@@ -56,11 +57,8 @@ struct RunView: View {
                         .font(.largeTitle)
                         .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(24)
-                        .background(Color.gray.opacity(0.5))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
                 }
-                .glassEffect()
+                .glassEffect(.regular.interactive(true))
                 
                 Spacer()
                 
@@ -78,11 +76,8 @@ struct RunView: View {
                         .font(.largeTitle)
                         .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(36)
-                        .background(Color.gray.opacity(0.5))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
                 }
-                .glassEffect()
+                .glassEffect(.regular.interactive(true))
                 
                 Spacer()
                 
@@ -95,17 +90,15 @@ struct RunView: View {
                         .font(.largeTitle)
                         .foregroundStyle(colorScheme == .light ? .black : .white)
                         .padding(24)
-                        .background(Color.gray.opacity(0.5))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
-                }
-                .glassEffect()
-            }
-            .padding(.horizontal, 30)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .background(Color(.systemBackground).opacity(0.9)) // Adaptive background with transparency
 
+                }
+                .glassEffect(.regular.interactive(true))
+                
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            
+        }
 
         
     }

@@ -13,12 +13,17 @@ struct RunningMapView: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @State private var showRunSheet = true // Auto-show RunView sheet
     @State private var showMapSelection = false
+    @State private var mapSelection: MapSelection<Int>?
+    @State private var initialMapPosition: MapCameraPosition?
     
     var body: some View {
         NavigationStack {
             ZStack {
                 // Full-screen map with route tracking
-            Map(position: $runTracker.region) {
+            Map(position: Binding(
+                get: { initialMapPosition ?? .automatic },
+                set: { initialMapPosition = $0 }
+            ), selection: $mapSelection) {
                 UserAnnotation()
                 
                 // Show current route
@@ -41,7 +46,12 @@ struct RunningMapView: View {
                 }
             }
             .mapStyle(runTracker.mapStyle)
-            .ignoresSafeArea()
+            .ignoresSafeArea(edges: .bottom)
+            .mapControls {
+                MapUserLocationButton()
+                MapCompass()
+                MapPitchToggle()
+            }
             
             // Time display at the top
             VStack {
@@ -80,6 +90,11 @@ struct RunningMapView: View {
             // Start tracking when this view appears (only if not already running)
             if !runTracker.isRunning {
                 runTracker.startRun()
+            }
+            
+            // Set initial map position to user's current location (only once)
+            if initialMapPosition == nil {
+                initialMapPosition = runTracker.region
             }
         }
         }
@@ -174,9 +189,9 @@ struct FlipDigitView: View {
             ZStack {
                 // Background container
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.black.opacity(0.5))
+                    .fill(.black.opacity(0.4))
                     .frame(width: 60, height: 80)
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .glassEffect(.regular.tint(.black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
                 
                 // Current value - no animation, just updates
                 Text(String(format: "%02d", value))

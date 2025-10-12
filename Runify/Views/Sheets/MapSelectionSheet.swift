@@ -13,44 +13,7 @@ struct MapSelectionSheet: View {
     @EnvironmentObject var runTracker: RunTracker
     @State private var selectedStyle: MapStyleOption = .standard
     
-    enum MapStyleOption: String, CaseIterable {
-        case standard = "Standard"
-        case imagery = "Imagery"
-        case hybrid = "Hybrid"
-        
-        var mapStyle: MapStyle {
-            switch self {
-            case .standard:
-                return .standard
-            case .imagery:
-                return .imagery
-            case .hybrid:
-                return .hybrid
-            }
-        }
-        
-        var description: String {
-            switch self {
-            case .standard:
-                return "Classic road map with labels"
-            case .imagery:
-                return "Satellite imagery view"
-            case .hybrid:
-                return "Satellite with road labels"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .standard:
-                return "map"
-            case .imagery:
-                return "globe"
-            case .hybrid:
-                return "map.fill"
-            }
-        }
-    }
+    // MapStyleOption enum is now defined in RunTracker.swift
     
     var body: some View {
         VStack(spacing: 0) {
@@ -75,28 +38,11 @@ struct MapSelectionSheet: View {
                             isSelected: selectedStyle == style
                         ) {
                             selectedStyle = style
+                            // Immediately update the map style when selected
+                            runTracker.mapStyle = style.mapStyle
+                            runTracker.mapStyleOption = style
                         }
                     }
-                    
-                    // Apply button
-                    Button(action: {
-                        runTracker.mapStyle = selectedStyle.mapStyle
-                        dismiss()
-                    }) {
-                        HStack {
-                            Image(systemName: "checkmark")
-                                .font(.headline)
-                            Text("Apply Style")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.accentColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .padding(.top, 8)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 20)
@@ -105,32 +51,16 @@ struct MapSelectionSheet: View {
         .presentationDetents([.fraction(0.7)])
         .presentationDragIndicator(.hidden)
         .onAppear {
-            // Set initial selection based on current map style
-            selectedStyle = getCurrentMapStyle(from: runTracker.mapStyle)
+            // Set initial selection based on current map style option
+            selectedStyle = runTracker.mapStyleOption
         }
     }
     
-    // Helper function to determine current map style
-    private func getCurrentMapStyle(from mapStyle: MapStyle) -> MapStyleOption {
-        // Since MapStyle doesn't conform to Equatable, we'll use a different approach
-        // We'll compare the string representation of the map style
-        let mapStyleString = String(describing: mapStyle)
-        
-        if mapStyleString.contains("standard") {
-            return .standard
-        } else if mapStyleString.contains("imagery") {
-            return .imagery
-        } else if mapStyleString.contains("hybrid") {
-            return .hybrid
-        } else {
-            return .standard // Default fallback
-        }
-    }
 }
 
 // Map Style Card Component
 struct MapStyleCard: View {
-    let style: MapSelectionSheet.MapStyleOption
+    let style: MapStyleOption
     let isSelected: Bool
     let onTap: () -> Void
     
@@ -169,13 +99,10 @@ struct MapStyleCard: View {
                 }
             }
             .padding(16)
-            .background(
+            .glassEffect(.regular.tint(isSelected ? .accentColor.opacity(0.2) : .black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                    )
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(PlainButtonStyle())

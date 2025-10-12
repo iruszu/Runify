@@ -165,8 +165,7 @@ struct StatCard: View {
                 .foregroundColor(.secondary)
         }
         .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
         .frame(maxWidth: .infinity)
     }
 }

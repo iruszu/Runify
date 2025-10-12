@@ -111,8 +111,7 @@ struct WeatherCard: View {
                 .fontWeight(.medium)
         }
         .padding(16)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -134,8 +133,7 @@ struct QuickActionButton: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color(.secondarySystemBackground))
-        .cornerRadius(12)
+        .glassEffect(.regular.tint(.accentColor.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

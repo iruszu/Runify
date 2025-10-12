@@ -13,16 +13,23 @@ struct MapView: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @State private var hasInitialized = false
     @State private var showMapSelection = false
+    @State private var mapSelection: MapSelection<Int>?
 
     var body: some View {
         NavigationStack {
             ZStack (alignment: .bottom) {
-            Map(position: $runTracker.staticRegion) {
+            Map(position: $runTracker.staticRegion, selection: $mapSelection) {
                 UserAnnotation()
-
                 }
                 .mapStyle(runTracker.mapStyle)
                 .ignoresSafeArea(edges: .bottom)
+                .mapControls {
+                    MapUserLocationButton()
+                    MapCompass()
+                    MapPitchToggle()
+                }
+                .controlSize(.large)
+
 
             }
             .toolbar {

@@ -145,7 +145,9 @@ struct RunOptionsSheet: View {
         }
         .presentationDetents([.fraction(0.6)])
         .presentationDragIndicator(.hidden)
+
     }
+       
     
     private func handleStartRun() {
         dismiss()
@@ -200,13 +202,10 @@ struct RouteCard: View {
             }
             .padding(12)
             .frame(width: 160, height: 120)
-            .background(
+            .glassEffect(.regular.tint(isSelected ? .accentColor.opacity(0.2) : .black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
+            .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
-                    )
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(PlainButtonStyle())
