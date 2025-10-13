@@ -69,6 +69,11 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var mapStyle: MapStyle = .imagery(elevation: .realistic) // Shared map style for all map views
     @Published var mapStyleOption: MapStyleOption = .imagery // Track the selected map style option
     
+    // Planned route data (when running to a destination)
+    @Published var plannedDestinationName: String?
+    @Published var plannedDestinationCoordinate: CLLocationCoordinate2D?
+    @Published var plannedRouteCoordinates: [CLLocationCoordinate2D] = []
+    
     private let timerManager = TimerManager()
     
     override init() {
@@ -96,7 +101,8 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     func startRun() {
         startLocation = nil // Reset start location because a new run is starting
         lastLocation = nil // Reset last location
-        locations = [] // Clear previous route
+        locations = [] // Clear previous route (actual path)
+        // Note: plannedRoute data is NOT cleared here - it's set from AppCoordinator
         isRunning = true // Set running state to true
         
         distance = 0.0 // Reset distance
@@ -148,6 +154,10 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         // Convert CLLocation array to Coordinate array
         let routeCoordinates = locations.map { Coordinate($0.coordinate) }
         
+        // Convert planned route coordinates to Coordinate array (if exists)
+        let plannedRouteCoords = plannedRouteCoordinates.isEmpty ? nil : plannedRouteCoordinates.map { Coordinate($0) }
+        let destinationCoord = plannedDestinationCoordinate.map { Coordinate($0) }
+        
         // Get location name using reverse geocoding
         getLocationName(from: startLocation) { locationName in
             let completedRun = Run(
@@ -157,7 +167,11 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
                 duration: self.elapsedTime,
                 pace: self.pace,
                 startLocation: startCoordinate,
-                locations: routeCoordinates
+                locations: routeCoordinates,
+                isFavorited: false,
+                destinationName: self.plannedDestinationName,
+                destinationCoordinate: destinationCoord,
+                plannedRoute: plannedRouteCoords
             )
             
             // Only save valid runs
@@ -165,6 +179,9 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
                 context.insert(completedRun)
                 try? context.save()
             }
+            
+            // Clear planned route data after saving
+            self.clearPlannedRoute()
         }
     }
     
@@ -247,7 +264,42 @@ extension RunTracker {
         }
         }
     
+    // MARK: - Planned Route Methods
     
+    /// Set planned route data from AppCoordinator
+    func setPlannedRoute(destinationName: String, coordinate: CLLocationCoordinate2D, polyline: MKPolyline) {
+        self.plannedDestinationName = destinationName
+        self.plannedDestinationCoordinate = coordinate
+        self.plannedRouteCoordinates = polyline.coordinates()
+    }
+    
+    /// Clear planned route data
+    func clearPlannedRoute() {
+        plannedDestinationName = nil
+        plannedDestinationCoordinate = nil
+        plannedRouteCoordinates = []
+    }
+    
+    /// Calculate distance remaining to destination
+    func distanceToDestination() -> Double? {
+        guard let lastLocation = lastLocation,
+              let destination = plannedDestinationCoordinate else {
+            return nil
+        }
         
+        let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
+        return lastLocation.distance(from: destinationLocation)
+    }
 
+}
+
+// MARK: - MKPolyline Extension
+
+extension MKPolyline {
+    /// Extract coordinates from MKPolyline
+    func coordinates() -> [CLLocationCoordinate2D] {
+        var coords = [CLLocationCoordinate2D](repeating: kCLLocationCoordinate2DInvalid, count: pointCount)
+        getCoordinates(&coords, range: NSRange(location: 0, length: pointCount))
+        return coords
+    }
 }
