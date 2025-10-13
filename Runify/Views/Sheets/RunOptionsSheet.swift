@@ -12,10 +12,12 @@ struct RunOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject var runTracker: RunTracker
+    @EnvironmentObject var healthKitManager: HealthKitManager
     @StateObject private var viewModel = SearchViewModel()
     
     @State private var selectedLocation: MKMapItem?
     @State private var isGoSelected: Bool = true
+    @State private var showHealthKitPermission = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -126,6 +128,12 @@ struct RunOptionsSheet: View {
         }
         .presentationDetents([.fraction(0.6)])
         .presentationDragIndicator(.hidden)
+        .sheet(isPresented: $showHealthKitPermission) {
+            HealthKitPermissionSheet {
+                proceedWithRun()
+            }
+            .environmentObject(healthKitManager)
+        }
         .onAppear {
             viewModel.setRunTracker(runTracker)
             viewModel.loadRecommendedRoutes()
@@ -134,6 +142,17 @@ struct RunOptionsSheet: View {
        
     
     private func handleStartRun() {
+        // Check if HealthKit authorization has been requested
+        if !healthKitManager.authorizationRequested {
+            // Show HealthKit permission sheet first
+            showHealthKitPermission = true
+        } else {
+            // Proceed with starting the run
+            proceedWithRun()
+        }
+    }
+    
+    private func proceedWithRun() {
         // If a route is selected, calculate the route first
         if let selectedLocation = selectedLocation {
             calculateRouteAndStart(to: selectedLocation)
@@ -286,4 +305,5 @@ struct RouteCard: View {
     RunOptionsSheet()
         .environmentObject(AppCoordinator())
         .environmentObject(RunTracker())
+        .environmentObject(HealthKitManager())
 }

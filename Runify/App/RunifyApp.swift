@@ -12,11 +12,13 @@ import SwiftData
 @main
 struct RunifyApp: App {
     @Environment(\.colorScheme) var colorScheme
+    @StateObject private var healthKitManager = HealthKitManager()
     
     var body: some Scene {
         WindowGroup {
             MainTabView()
                 .preferredColorScheme(.dark)
+                .environmentObject(healthKitManager)
         }
         .modelContainer(for: Run.self)
         
