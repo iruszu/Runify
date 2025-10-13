@@ -14,14 +14,7 @@ struct RunSummaryView: View {
     
     var body: some View {
         VStack(spacing: 30) {
-            Text("Run Complete")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-                .background(Color(.systemBackground))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-            
+
             VStack(spacing: 20) {
                 SummaryCard(
                     title: "Distance",

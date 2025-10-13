@@ -37,7 +37,7 @@ struct RunOptionsSheet: View {
                     // Go option
                     Button(action: {
                         isGoSelected = true
-                        selectedRoute = nil
+
                     }) {
                         HStack(spacing: 16) {
                             Image(systemName: "figure.run")
