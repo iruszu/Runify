@@ -13,10 +13,11 @@ struct HomeView: View {
     @Query(sort: \Run.date, order: .reverse) private var runs: [Run]
     
     var body: some View {
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 20) {
                     DateCard(date: Date())
                         .padding(.horizontal, 20)
+                        .padding(.top, 20)
                 
                     
                     if runs.isEmpty {
@@ -37,83 +38,39 @@ struct HomeView: View {
                         .padding()
                         .frame(maxWidth: .infinity, minHeight: 400)
                     } else {
-                        Text("Recent Runs")
-                            .font(.title3)
+                        Text("Good Afternoon,")
+                            .font(.subheadline)
+                            .padding(.horizontal, 20)
+                            .opacity(0.7)
+                            .offset(y: 20)
+                        Text("Kellie Ho")
+                            .font(.largeTitle)
                             .bold()
                             .padding(.horizontal, 20)
-                            .offset(y: 20)
+
                         // Horizontal scroll view of run summary cards
                         ScrollView(.horizontal, showsIndicators: false) {
                             LazyHStack(spacing: 20) {
                                 ForEach(runs, id: \.id) { run in
                                     RunSummaryCard(run: run)
-                                        .frame(width: 300) // Card width reduced by 50px
+                                        .frame(width: 330)
                                 }
                             }
                             .scrollTargetLayout()
-                            .padding(.horizontal, (UIScreen.main.bounds.width - 300) / 2) // Center the first card with new width
+                            .padding(.horizontal, (UIScreen.main.bounds.width - 330) / 2) // Center the first card with new width
                         }
                         .scrollTargetBehavior(.viewAligned)
-                        .frame(height: 450) // Fixed height for horizontal scroll
-                    }
-                    // Quick Actions
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Quick Actions")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 20)
-                        
-                        HStack(spacing: 12) {
-                            QuickActionButton(title: "Start Run", icon: "play.fill", color: .orange)
-                            QuickActionButton(title: "View Stats", icon: "chart.bar.fill", color: .blue)
-                            QuickActionButton(title: "Set Goal", icon: "target", color: .green)
-                        }
-                        .padding(.horizontal, 20)
+
                     }
                 }
- 
+
             }
-        .background(Color(.systemBackground))
+        .scrollDisabled(true)
+   
     }
 }
 
-// MARK: - Supporting Components
 
-
-struct WeatherCard: View {
-    let temperature: String
-    let condition: String
-    let recommendation: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "cloud.sun.fill")
-                    .foregroundColor(.orange)
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(temperature)
-                        .font(.title2)
-                        .fontWeight(.bold)
-                    
-                    Text(condition)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-            }
-            
-            Text(recommendation)
-                .font(.subheadline)
-                .foregroundColor(.orange)
-                .fontWeight(.medium)
-        }
-        .padding(16)
-        .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
-    }
-}
 
 struct QuickActionButton: View {
     let title: String
