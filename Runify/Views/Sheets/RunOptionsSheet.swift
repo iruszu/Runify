@@ -121,23 +121,10 @@ struct RunOptionsSheet: View {
                     .padding(.top, 8)
                     
                     // Start button
-                    Button(action: {
+                    StartRunButton {
                         handleStartRun()
-                    }) {
-                        HStack {
-                            Image(systemName: "play.fill")
-                                .font(.headline)
-                            Text("Start Run")
-                                .font(.headline)
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.accentColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
-                    .padding(.horizontal, 20)
+       
                     .padding(.top, 8)
                 }
                 .padding(.bottom, 20)
