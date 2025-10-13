@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
-    @State var selectedTab = 0
     @StateObject private var coordinator = AppCoordinator()
     @StateObject private var runTracker = RunTracker()
     @State private var showRunOptions = false
@@ -22,9 +21,8 @@ struct MainTabView: View {
                     .environmentObject(runTracker)
             }
             Tab("Statistics", systemImage: "chart.line.uptrend.xyaxis") {
-                
+                Text("Placeholder")
             }
-
             Tab("Map", systemImage: "map", role: .search) {
                 MapView()
                     .environmentObject(coordinator)
@@ -34,8 +32,7 @@ struct MainTabView: View {
                 ProfileView()
                     .environmentObject(runTracker)
             }
-            
-            }
+        }
         .fullScreenCover(isPresented: $coordinator.showRunningMap) {
             RunningMapView()
                 .environmentObject(runTracker)
