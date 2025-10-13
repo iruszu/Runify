@@ -23,8 +23,8 @@ class TimerManager: ObservableObject {
         timerStartDate = Date()
         
         // Create and start new timer
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { [weak self] _ in
-            action()
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { _ in
+            action() //increments counter by 1
         }
     }
     
@@ -48,8 +48,8 @@ class TimerManager: ObservableObject {
         timerStartDate = Date()
         
         // Resume timer with remaining time
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { [weak self] _ in
-            action()
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { _ in
+            action() //decrements counter by 1
         }
     }
     
