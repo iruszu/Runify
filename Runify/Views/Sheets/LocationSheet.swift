@@ -129,12 +129,15 @@ struct LocationSheet: View {
                                     .foregroundColor(.secondary)
                             }
                         } else if let routeInfo = routeInfo {
-                            VStack(alignment: .leading, spacing: 12) {
+                            VStack(alignment: .center, spacing: 12) {
                                 Text("Route Information")
                                     .font(.headline)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 HStack(spacing: 20) {
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    Spacer()
+                                    
+                                    VStack(alignment: .center, spacing: 4) {
                                         Text("Distance")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
@@ -143,7 +146,9 @@ struct LocationSheet: View {
                                             .fontWeight(.semibold)
                                     }
                                     
-                                    VStack(alignment: .leading, spacing: 4) {
+                                    Spacer()
+                                    
+                                    VStack(alignment: .center, spacing: 4) {
                                         Text("Est. Time")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
@@ -151,6 +156,8 @@ struct LocationSheet: View {
                                             .font(.title3)
                                             .fontWeight(.semibold)
                                     }
+                                    
+                                    Spacer()
                                 }
                                 
                                 // Distance warnings with color coding
@@ -163,6 +170,7 @@ struct LocationSheet: View {
                                             .foregroundColor(warningInfo.color)
                                     }
                                     .padding(.top, 4)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 }
                             }
                             .padding()
@@ -177,7 +185,7 @@ struct LocationSheet: View {
                             }) {
                                 HStack {
                                     Image(systemName: "figure.run")
-                                    Text("Run to This Location")
+                                    Text("Run")
                                         .fontWeight(.semibold)
                                 }
                                 .frame(maxWidth: .infinity)
