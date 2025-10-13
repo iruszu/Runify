@@ -6,37 +6,17 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct RunOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var coordinator: AppCoordinator
-    @State private var selectedRoute: Route?
+    @EnvironmentObject var runTracker: RunTracker
+    @StateObject private var viewModel = SearchViewModel()
+    
+    @State private var selectedLocation: MKMapItem?
     @State private var isGoSelected: Bool = true
-    
-    // Mock recommended routes - will be replaced with real data
-    private let recommendedRoutes = [
-        Route(name: "Central Park Loop", distance: "5.2 km", difficulty: "Easy", time: "25 min"),
-        Route(name: "Riverside Trail", distance: "3.8 km", difficulty: "Easy", time: "18 min"),
-        Route(name: "Hill Challenge", distance: "7.1 km", difficulty: "Hard", time: "35 min"),
-        Route(name: "Waterfront Run", distance: "4.5 km", difficulty: "Medium", time: "22 min"),
-        Route(name: "Forest Path", distance: "6.3 km", difficulty: "Medium", time: "30 min")
-    ]
-    
-    struct Route {
-        let name: String
-        let distance: String
-        let difficulty: String
-        let time: String
-        
-        var difficultyColor: Color {
-            switch difficulty {
-            case "Easy": return .green
-            case "Medium": return .orange
-            case "Hard": return .red
-            default: return .gray
-            }
-        }
-    }
+    @State private var showLocationDetail = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -96,26 +76,42 @@ struct RunOptionsSheet: View {
                     
                     // Recommended routes section
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Recommended Routes")
-                            .font(.headline)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 20)
+                        HStack {
+                            Text("Recommended Routes")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            if viewModel.isLoadingRecommended {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                                    .padding(.leading, 8)
+                            }
+                        }
+                        .padding(.horizontal, 20)
                         
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(recommendedRoutes, id: \.name) { route in
-                                    RouteCard(
-                                        route: route,
-                                        isSelected: selectedRoute?.name == route.name
-                                    ) {
-                                        selectedRoute = route
-                                        isGoSelected = false
+                        if viewModel.recommendedRoutes.isEmpty && !viewModel.isLoadingRecommended {
+                            Text("No routes found nearby")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                        } else {
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(viewModel.recommendedRoutes.prefix(10), id: \.self) { mapItem in
+                                        RouteCard(
+                                            mapItem: mapItem,
+                                            userLocation: runTracker.lastLocation,
+                                            isSelected: selectedLocation == mapItem
+                                        ) {
+                                            selectedLocation = mapItem
+                                            isGoSelected = false
+                                            showLocationDetail = true
+                                        }
                                     }
                                 }
+                                .padding(.leading, 20)
                             }
-                            .padding(.leading, 20)
-                            
-                        
                         }
                     }
                     .padding(.top, 8)
@@ -132,7 +128,19 @@ struct RunOptionsSheet: View {
         }
         .presentationDetents([.fraction(0.6)])
         .presentationDragIndicator(.hidden)
-
+        .sheet(isPresented: $showLocationDetail) {
+            if let location = selectedLocation {
+                LocationSheet(mapItem: location, routeDistance: 0)
+                    .environmentObject(runTracker)
+                    .environmentObject(coordinator)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+        }
+        .onAppear {
+            viewModel.setRunTracker(runTracker)
+            viewModel.loadRecommendedRoutes()
+        }
     }
        
     
@@ -147,41 +155,81 @@ struct RunOptionsSheet: View {
 
 // Route card component
 struct RouteCard: View {
-    let route: RunOptionsSheet.Route
+    let mapItem: MKMapItem
+    let userLocation: CLLocation?
     let isSelected: Bool
     let onTap: () -> Void
+    
+    private var distance: String {
+        guard let userLocation = userLocation else { return "-- km" }
+        
+        let itemLocation = CLLocation(
+            latitude: mapItem.placemark.coordinate.latitude,
+            longitude: mapItem.placemark.coordinate.longitude
+        )
+        let distanceInKm = userLocation.distance(from: itemLocation) / 1000
+        return String(format: "%.1f km", distanceInKm)
+    }
+    
+    private var category: String {
+        if let category = mapItem.pointOfInterestCategory {
+            switch category {
+            case .park: return "Park"
+            case .beach: return "Beach"
+            case .nationalPark: return "National Park"
+            case .campground: return "Campground"
+            case .marina: return "Waterfront"
+            case .museum: return "Landmark"
+            case .library: return "Landmark"
+            case .stadium: return "Sports"
+            case .university: return "Campus"
+            case .zoo: return "Zoo"
+            case .aquarium: return "Aquarium"
+            default: return "Location"
+            }
+        }
+        return "Location"
+    }
+    
+    private var categoryColor: Color {
+        if let category = mapItem.pointOfInterestCategory {
+            switch category {
+            case .park, .nationalPark, .campground: return .green
+            case .beach, .marina, .aquarium: return .blue
+            case .museum, .library, .stadium, .university: return .orange
+            default: return .gray
+            }
+        }
+        return .gray
+    }
     
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 8) {
                 // Route name
-                Text(route.name)
+                Text(mapItem.name ?? "Unknown Location")
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
                 
-                // Distance and time
+                // Distance
                 HStack(spacing: 12) {
-                    Label(route.distance, systemImage: "location")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Label(route.time, systemImage: "clock")
+                    Label(distance, systemImage: "location")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
-                // Difficulty badge
+                // Category badge
                 HStack {
-                    Text(route.difficulty)
+                    Text(category)
                         .font(.caption)
                         .fontWeight(.medium)
                         .foregroundColor(.white)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(route.difficultyColor)
+                        .background(categoryColor)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
                     
                     Spacer()
@@ -202,4 +250,5 @@ struct RouteCard: View {
 #Preview {
     RunOptionsSheet()
         .environmentObject(AppCoordinator())
+        .environmentObject(RunTracker())
 }
