@@ -30,8 +30,8 @@ struct DateCard: View {
         .padding(.vertical, 16)
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 32))
-        .glassEffect()
         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+        .glassEffect(.regular.tint(.clear))
     }
 }
 

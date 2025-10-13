@@ -76,6 +76,7 @@ struct RunEditSheet: View {
                 }
                 .padding()
             }
+
             .toolbarColorScheme(colorScheme == .light ? .dark : .light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

@@ -65,7 +65,11 @@ struct MapStyleCard: View {
     let onTap: () -> Void
     
     var body: some View {
-        Button(action: onTap) {
+        Button(action: {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                onTap()
+            }
+        }) {
             VStack(spacing: 12) {
                 // Map preview
                 MapPreviewView(mapStyle: style.mapStyle)
@@ -91,21 +95,27 @@ struct MapStyleCard: View {
                     
                     Spacer()
                     
-                    if isSelected {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.accentColor)
-                            .font(.title3)
-                    }
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isSelected ? .accentColor : .secondary)
+                        .font(.title3)
+                        .animation(.easeInOut(duration: 0.2), value: isSelected)
                 }
             }
             .padding(16)
-            .glassEffect(.regular.tint(isSelected ? .accentColor.opacity(0.2) : .black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
+                    .animation(.easeInOut(duration: 0.2), value: isSelected)
+            )
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+                    .animation(.easeInOut(duration: 0.2), value: isSelected)
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
 
@@ -130,7 +140,3 @@ struct MapPreviewView: View {
     }
 }
 
-#Preview {
-    MapSelectionSheet()
-        .environmentObject(RunTracker())
-}

@@ -17,7 +17,6 @@ struct RunSummaryCard: View {
             RunDataView(run: run)
  
         }
-        .glassEffect(.regular.tint(.black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
         .overlay(alignment: .topTrailing) {
             // Heart button for favoriting
             Button {
@@ -25,9 +24,9 @@ struct RunSummaryCard: View {
                 try? modelContext.save()
             } label: {
                 Image(systemName: run.isFavorited ? "heart.fill" : "heart")
-                    .symbolEffect(.pulse, value: run.isFavorited)
-                    .foregroundColor(run.isFavorited ? .red : .white)
-                    .padding(12)
+                    .font(.system(size: 25))
+                   .foregroundColor(run.isFavorited ? .red : .white)
+                    .padding(20)
                     
             }
            
@@ -105,8 +104,8 @@ struct MapSnapshotView: View {
                             .tint(.red)
                     }
                 }
+                .interactiveDismissDisabled(true)
                 .mapStyle(mapStyle)
-
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -122,18 +121,19 @@ struct MapSnapshotView: View {
                  LinearGradient(
                      gradient: Gradient(stops: [
                          .init(color: Color.clear, location: 0.0),
-                         .init(color: Color.clear, location: 0.5), // Adjust this to control spread
-                         .init(color: Color.black.opacity(0.9), location: 1.0)
+                         .init(color: Color.clear, location: 0.1), // Adjust this to control spread
+                         .init(color: Color.black.opacity(1), location: 1.0)
                      ]),
                      startPoint: .top,
                      endPoint: .bottom
                  )
-                 .frame(height: 700)
+                 .frame(height: 300)
                  .blendMode(.multiply)
             }
         }
         .frame(height: 400) // Reduced height
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .opacity(0.6)
 
     }
     
