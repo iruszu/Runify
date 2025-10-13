@@ -152,6 +152,18 @@ struct LocationSheet: View {
                                             .fontWeight(.semibold)
                                     }
                                 }
+                                
+                                // Distance warnings with color coding
+                                if let warningInfo = getDistanceWarning(routeInfo.distance / 1000) {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundColor(warningInfo.color)
+                                        Text(warningInfo.message)
+                                            .font(.caption)
+                                            .foregroundColor(warningInfo.color)
+                                    }
+                                    .padding(.top, 4)
+                                }
                             }
                             .padding()
                             .background(Color(.systemGray6).opacity(0.5))
@@ -161,8 +173,7 @@ struct LocationSheet: View {
                         // Action Buttons
                         VStack(spacing: 12) {
                             Button(action: {
-                                // Start run to this location
-                               
+                                startRunToLocation()
                             }) {
                                 HStack {
                                     Image(systemName: "figure.run")
@@ -171,10 +182,11 @@ struct LocationSheet: View {
                                 }
                                 .frame(maxWidth: .infinity)
                                 .padding()
-                                .background(Color.accentColor)
+                                .background(routeInfo != nil ? Color.accentColor : Color.gray)
                                 .foregroundColor(.white)
                                 .cornerRadius(12)
                             }
+                            .disabled(routeInfo == nil)
                             
                             Button(action: {
                                 openInMaps()
@@ -307,6 +319,38 @@ struct LocationSheet: View {
         mapItem.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking
         ])
+    }
+    
+    private func getDistanceWarning(_ distanceInKm: Double) -> (message: String, color: Color)? {
+        switch distanceInKm {
+        case 50...:
+            return ("Very long distance - consider a shorter route", .red)
+        case 40..<50:
+            return ("This is an ultra-marathon distance", .red)
+        case 20..<40:
+            return ("Long distance run", .orange)
+        case 10..<20:
+            return ("Moderate distance", .yellow)
+        default:
+            return nil // No warning for under 10km
+        }
+    }
+    
+    private func startRunToLocation() {
+        guard let routeInfo = routeInfo else { return }
+        
+        // Set planned route in coordinator
+        coordinator.setPlannedRoute(
+            destinationName: mapItem.name ?? "Unknown Location",
+            coordinate: mapItem.placemark.coordinate,
+            polyline: routeInfo.polyline
+        )
+        
+        // Dismiss this sheet
+        dismiss()
+        
+        // Start the countdown
+        coordinator.navigateToCountdown()
     }
 }
 
