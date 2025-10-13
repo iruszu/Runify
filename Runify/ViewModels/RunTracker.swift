@@ -18,11 +18,11 @@ enum MapStyleOption: String, CaseIterable {
     var mapStyle: MapStyle {
         switch self {
         case .standard:
-            return .standard
+            return .standard(elevation: .realistic)
         case .imagery:
-            return .imagery
+            return .imagery(elevation: .realistic)
         case .hybrid:
-            return .hybrid
+            return .hybrid(elevation: .realistic)
         }
     }
     
@@ -66,8 +66,8 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var startLocation: CLLocation?
     @Published var lastLocation: CLLocation?
     @Published var locations: [CLLocation] = [] // Array to store all location points for route drawing
-    @Published var mapStyle: MapStyle = .standard // Shared map style for all map views
-    @Published var mapStyleOption: MapStyleOption = .standard // Track the selected map style option
+    @Published var mapStyle: MapStyle = .imagery(elevation: .realistic) // Shared map style for all map views
+    @Published var mapStyleOption: MapStyleOption = .imagery // Track the selected map style option
     
     private let timerManager = TimerManager()
     
