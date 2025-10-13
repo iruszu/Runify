@@ -6,8 +6,15 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		ABDEB7872E9CB50900BDE26C /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABDEB7862E9CB50900BDE26C /* HealthKit.framework */; };
+		ABDEB7892E9CB51000BDE26C /* HealthKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		ABA9E1522E53F72000138E08 /* Runify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runify.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		ABDEB7862E9CB50900BDE26C /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
+		ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKitUI.framework; path = System/Library/Frameworks/HealthKitUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,6 +43,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABDEB7872E9CB50900BDE26C /* HealthKit.framework in Frameworks */,
+				ABDEB7892E9CB51000BDE26C /* HealthKitUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -46,6 +55,7 @@
 			isa = PBXGroup;
 			children = (
 				ABA9E1542E53F72000138E08 /* Runify */,
+				ABDEB7852E9CB50800BDE26C /* Frameworks */,
 				ABA9E1532E53F72000138E08 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -56,6 +66,15 @@
 				ABA9E1522E53F72000138E08 /* Runify.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		ABDEB7852E9CB50800BDE26C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */,
+				ABDEB7862E9CB50900BDE26C /* HealthKit.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -278,8 +297,10 @@
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -318,8 +339,10 @@
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
