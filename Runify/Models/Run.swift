@@ -11,7 +11,7 @@ import MapKit
 
 /// Represents a completed running session with location and performance data
 @Model
-final class Run {
+final class Run: Hashable { //final means we can't create a subcalss from it
     // MARK: - Properties
     
     @Attribute(.unique) var id: UUID
