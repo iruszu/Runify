@@ -14,12 +14,22 @@ struct MapView: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @Environment(\.modelContext) private var modelContext
     @Query private var runs: [Run]
+    private var filteredRuns: [Run] {
+        if showFavouriteRunsOnly {
+            return runs.filter { $0.isFavorited }
+        } else {
+            return runs
+        }
+    }
     
     @State private var hasInitialized = false
     @State private var showMapSelection = false
     @State private var selectedRun: Run?
     @State private var showRunDetailSheet = false
     @State private var showRouteOnMap = false
+    @State private var showFavouriteRunsOnly: Bool = false
+    @State private var runToDelete: Run?
+    @State private var showDeleteConfirmation = false
 
     // MARK: - Computed Properties
     
@@ -43,6 +53,18 @@ struct MapView: View {
         showRunDetailSheet = true
     }
     
+    private func deleteRun(_ run: Run) {
+        modelContext.delete(run)
+        try? modelContext.save()
+        
+        // Clear selection if the deleted run was selected
+        if selectedRun?.id == run.id {
+            selectedRun = nil
+            showRouteOnMap = false
+            showRunDetailSheet = false
+        }
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack (alignment: .bottom) {
@@ -50,7 +72,7 @@ struct MapView: View {
                     UserAnnotation()
                     selectedRunPolyline
                     
-                    ForEach(runs) { run in
+                    ForEach(filteredRuns) { run in
                         if let startLocation = run.startLocation {
                             Marker(
                                 run.locationName,
@@ -58,6 +80,11 @@ struct MapView: View {
                                 coordinate: startLocation.clCoordinate
                             )
                             .tag(run)
+                            .tint(run.isFavorited ? .red : .blue)
+                            .onLongPressGesture {
+                                runToDelete = run
+                                showDeleteConfirmation = true
+                            }
                         }
                     }
                 }
@@ -83,6 +110,18 @@ struct MapView: View {
                             .foregroundColor(.primary)
                     }
                 }
+                ToolbarSpacer(.fixed, placement: .topBarTrailing)
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: {
+                        // filter markers by favourited
+                        showFavouriteRunsOnly.toggle()
+                        
+                    }) {
+                        Image(systemName: showFavouriteRunsOnly ? "heart.fill" : "heart")
+                            .foregroundColor(showFavouriteRunsOnly ? .red : .white)
+                    }
+                    
+                }
             }
             .sheet(isPresented: $showMapSelection) {
                 MapSelectionSheet()
@@ -95,7 +134,7 @@ struct MapView: View {
                 if let selectedRun = selectedRun {
                     RunDetailSheet(run: selectedRun)
                         .environmentObject(runTracker)
-                        .presentationDetents([.medium])
+                        .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                         .presentationBackgroundInteraction(.enabled)
                 }
@@ -105,6 +144,21 @@ struct MapView: View {
                     // Clear the route and selection when sheet is dismissed
                     showRouteOnMap = false
                     selectedRun = nil
+                }
+            }
+            .alert("Delete Run", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {
+                    runToDelete = nil
+                }
+                Button("Delete", role: .destructive) {
+                    if let run = runToDelete {
+                        deleteRun(run)
+                    }
+                    runToDelete = nil
+                }
+            } message: {
+                if let run = runToDelete {
+                    Text("Are you sure you want to delete '\(run.locationName)'? This action cannot be undone.")
                 }
             }
 

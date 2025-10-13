@@ -11,13 +11,11 @@ import MapKit
 struct RunDetailSheet: View {
     let run: Run
     @Environment(\.dismiss) private var dismiss
-    @State private var mapRegion: MKCoordinateRegion
     @EnvironmentObject private var runTracker: RunTracker
     
-    init(run: Run) {
-        self.run = run
-        // Calculate bounding region that encompasses the entire run path
-        self._mapRegion = State(initialValue: MapRegionCalculator.calculateBoundingRegion(for: run))
+    // Computed property that updates when run changes
+    private var mapRegion: MKCoordinateRegion {
+        MapRegionCalculator.calculateBoundingRegion(for: run)
     }
     
     var body: some View {
