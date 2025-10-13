@@ -21,8 +21,13 @@ final class Run: Hashable { //final means we can't create a subcalss from it
     var duration: TimeInterval // in seconds
     var pace: Double // min/km
     var startLocation: Coordinate?
-    var locations: [Coordinate] // Route coordinates
+    var locations: [Coordinate] // Route coordinates (actual path taken)
     var isFavorited: Bool = false // Track if run is favorited
+    
+    // Planned route data (if run was started from a destination)
+    var destinationName: String?
+    var destinationCoordinate: Coordinate?
+    var plannedRoute: [Coordinate]? // The intended path from MKDirections
     
     
     init(
@@ -33,7 +38,10 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         pace: Double,
         startLocation: Coordinate? = nil,
         locations: [Coordinate] = [],
-        isFavorited: Bool = false
+        isFavorited: Bool = false,
+        destinationName: String? = nil,
+        destinationCoordinate: Coordinate? = nil,
+        plannedRoute: [Coordinate]? = nil
     ) {
         self.id = UUID()
         self.locationName = locationName
@@ -44,6 +52,9 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         self.startLocation = startLocation
         self.locations = locations
         self.isFavorited = isFavorited
+        self.destinationName = destinationName
+        self.destinationCoordinate = destinationCoordinate
+        self.plannedRoute = plannedRoute
     }
     
     // MARK: - Computed Properties
@@ -130,7 +141,10 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         pace: Double? = nil,
         startLocation: Coordinate? = nil,
         locations: [Coordinate]? = nil,
-        isFavorited: Bool? = nil
+        isFavorited: Bool? = nil,
+        destinationName: String? = nil,
+        destinationCoordinate: Coordinate? = nil,
+        plannedRoute: [Coordinate]? = nil
     ) {
         if let locationName = locationName {
             self.locationName = locationName
@@ -152,6 +166,15 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         }
         if let isFavorited = isFavorited {
             self.isFavorited = isFavorited
+        }
+        if let destinationName = destinationName {
+            self.destinationName = destinationName
+        }
+        if let destinationCoordinate = destinationCoordinate {
+            self.destinationCoordinate = destinationCoordinate
+        }
+        if let plannedRoute = plannedRoute {
+            self.plannedRoute = plannedRoute
         }
     }
     
