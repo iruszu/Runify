@@ -28,6 +28,7 @@ struct MapView: View {
     @State private var showRunDetailSheet = false
     @State private var showRouteOnMap = false
     @State private var showFavouriteRunsOnly: Bool = false
+    @State private var showRunOptions = false
 
     // MARK: - Computed Properties
     
@@ -57,6 +58,7 @@ struct MapView: View {
     var body: some View {
         NavigationStack {
             ZStack (alignment: .bottom) {
+                
                 Map(position: $runTracker.staticRegion, selection: $selectedRun) {
                     UserAnnotation()
                     selectedRunPolyline
@@ -86,6 +88,16 @@ struct MapView: View {
                     MapCompass()
                     MapPitchToggle()
                 }
+                
+                // Start Run Button
+                VStack {
+                    Spacer()
+                    StartRunButton {
+                        showRunOptions = true
+                    }
+                    .padding(.top, 20)
+                    .padding(.bottom, 50)
+                }
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -112,6 +124,11 @@ struct MapView: View {
             .sheet(isPresented: $showMapSelection) {
                 MapSelectionSheet()
                     .environmentObject(runTracker)
+            }
+            .sheet(isPresented: $showRunOptions) {
+                RunOptionsSheet()
+                    .environmentObject(coordinator)
+                    .presentationBackground(.clear)
             }
             .sheet(isPresented: Binding(
                 get: { showRunDetailSheet && selectedRun != nil },
