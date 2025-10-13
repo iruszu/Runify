@@ -28,8 +28,6 @@ struct MapView: View {
     @State private var showRunDetailSheet = false
     @State private var showRouteOnMap = false
     @State private var showFavouriteRunsOnly: Bool = false
-    @State private var runToDelete: Run?
-    @State private var showDeleteConfirmation = false
 
     // MARK: - Computed Properties
     
@@ -48,22 +46,13 @@ struct MapView: View {
     // MARK: - Methods
     
     private func handleRunSelection(_ run: Run) {
-        selectedRun = run
-        showRouteOnMap = true
-        showRunDetailSheet = true
+
+            selectedRun = run
+            showRouteOnMap = true
+            showRunDetailSheet = true
+        
     }
     
-    private func deleteRun(_ run: Run) {
-        modelContext.delete(run)
-        try? modelContext.save()
-        
-        // Clear selection if the deleted run was selected
-        if selectedRun?.id == run.id {
-            selectedRun = nil
-            showRouteOnMap = false
-            showRunDetailSheet = false
-        }
-    }
     
     var body: some View {
         NavigationStack {
@@ -81,10 +70,7 @@ struct MapView: View {
                             )
                             .tag(run)
                             .tint(run.isFavorited ? .red : .blue)
-                            .onLongPressGesture {
-                                runToDelete = run
-                                showDeleteConfirmation = true
-                            }
+
                         }
                     }
                 }
@@ -137,6 +123,7 @@ struct MapView: View {
                         .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                         .presentationBackgroundInteraction(.enabled)
+
                 }
             }
             .onChange(of: showRunDetailSheet) { oldValue, newValue in
@@ -144,21 +131,6 @@ struct MapView: View {
                     // Clear the route and selection when sheet is dismissed
                     showRouteOnMap = false
                     selectedRun = nil
-                }
-            }
-            .alert("Delete Run", isPresented: $showDeleteConfirmation) {
-                Button("Cancel", role: .cancel) {
-                    runToDelete = nil
-                }
-                Button("Delete", role: .destructive) {
-                    if let run = runToDelete {
-                        deleteRun(run)
-                    }
-                    runToDelete = nil
-                }
-            } message: {
-                if let run = runToDelete {
-                    Text("Are you sure you want to delete '\(run.locationName)'? This action cannot be undone.")
                 }
             }
 

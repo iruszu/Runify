@@ -11,9 +11,11 @@ struct RunSummaryCard: View {
         ZStack() {
             // Map Section (Top 2/3)
             MapSnapshotView(snapshot: nil, run: run, mapStyle: runTracker.mapStyle)
+
             
             // Run Data Section (Bottom 1/3)
             RunDataView(run: run)
+ 
         }
         .glassEffect(.regular.tint(.black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
         .overlay(alignment: .topTrailing) {
@@ -31,12 +33,14 @@ struct RunSummaryCard: View {
            
         }
         .onTapGesture {
-            showingEditSheet = true
+                showingEditSheet = true
         }
         .sheet(isPresented: $showingEditSheet) {
             RunEditSheet(run: run)
-                .presentationDetents([.fraction(0.3)]) // Adjust the height as needed
-                .preferredColorScheme(.dark)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled)
+                .presentationCornerRadius(20)
         }
         
     }
@@ -124,7 +128,7 @@ struct MapSnapshotView: View {
                      startPoint: .top,
                      endPoint: .bottom
                  )
-                 .frame(height: 600)
+                 .frame(height: 700)
                  .blendMode(.multiply)
             }
         }
@@ -194,7 +198,7 @@ struct MetricView: View {
                 .shadow(radius: 4)
             
             Text(value + (unit != nil ? " \(unit!)" : ""))
-                .font(.title2)
+                .font(.title3)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
             

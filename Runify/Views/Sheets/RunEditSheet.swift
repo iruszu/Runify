@@ -13,6 +13,7 @@ struct RunEditSheet: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
     @State private var editedTitle: String
+    @State private var showDeleteConfirmation = false
     
     // Initialize with current title
     init(run: Run) {
@@ -27,13 +28,13 @@ struct RunEditSheet: View {
                     // Editable title section
                     VStack(spacing: 12) {
                         Text("Run Title")
-                            .foregroundColor(colorScheme == .light ? .white : .black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                             .font(.headline)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         TextField("Enter run title", text: $editedTitle)
                             .font(.title2)
-                            .foregroundColor(colorScheme == .light ? .white : .black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                             .padding(.horizontal)
                     }
                     
@@ -41,20 +42,40 @@ struct RunEditSheet: View {
                     VStack(spacing: 8) {
                         Text("Date")
                             .font(.headline)
-                            .foregroundColor(colorScheme == .light ? .white : .black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Text(run.formattedDate)
                             .font(.subheadline)
-                            .foregroundColor(colorScheme == .light ? .white : .black)
+                            .foregroundColor(colorScheme == .dark ? .white : .black)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    
+                    // Delete button section
+                    VStack(spacing: 12) {
+   
+                        
+                        Button(action: {
+                            showDeleteConfirmation = true
+                        }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                                Text("Delete Run")
+                                    .foregroundColor(.red)
+                                    .fontWeight(.medium)
+                                Spacer()
+                            }
+                            .padding()
+                            .background(Color.red.opacity(0.1))
+                            .cornerRadius(12)
+                        }
+                    }
+                    
                     Spacer()
                 }
                 .padding()
             }
-            .navigationTitle("Edit Run")
-            .navigationBarTitleDisplayMode(.inline)
             .toolbarColorScheme(colorScheme == .light ? .dark : .light, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -81,6 +102,14 @@ struct RunEditSheet: View {
                     }
                 }
             }
+            .alert("Delete Run", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    deleteRun()
+                }
+            } message: {
+                Text("Are you sure you want to delete '\(run.locationName)'? This action cannot be undone.")
+            }
         }
 
     }
@@ -91,5 +120,11 @@ struct RunEditSheet: View {
         
         // Save to Swift Data
         try? modelContext.save()
+    }
+    
+    private func deleteRun() {
+        modelContext.delete(run)
+        try? modelContext.save()
+        dismiss()
     }
 }

@@ -73,7 +73,6 @@ struct MainTabView: View {
                 .environmentObject(coordinator)
                 .presentationBackground(.clear)
         }
-        .tabBarMinimizeBehavior(.onScrollDown)
         .onAppear {
             // Inject modelContext into RunTracker
             runTracker.setModelContext(modelContext)
