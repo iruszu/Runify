@@ -40,6 +40,19 @@ struct RunView: View {
                 }
                 
                 Spacer()
+                
+                // Show distance to destination if running to a planned destination
+                if let distanceToDestination = runTracker.distanceToDestination() {
+                    VStack {
+                        Text(String(format: "%.1f km", distanceToDestination / 1000))
+                        Text("To Destination")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundColor(colorScheme == .light ? .black : .white)
+                            .shadow(radius: 3)
+                            .textCase(.uppercase)
+                    }
+                    Spacer()
+                }
             }
             .padding(.top, 30)
             
