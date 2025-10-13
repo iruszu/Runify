@@ -26,12 +26,33 @@ struct RunningMapView: View {
             ), selection: $mapSelection) {
                 UserAnnotation()
                 
-                // Show current route
+                // Show planned route (if exists) - semi-transparent blue
+                if !runTracker.plannedRouteCoordinates.isEmpty {
+                    let polyline = MKPolyline(coordinates: runTracker.plannedRouteCoordinates, count: runTracker.plannedRouteCoordinates.count)
+                    MapPolyline(polyline)
+                        .stroke(.blue.opacity(0.5), lineWidth: 4)
+                }
+                
+                // Show actual route - solid orange
                 if !runTracker.locations.isEmpty {
                     let coordinates = runTracker.locations.map { $0.coordinate }
                     let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                     MapPolyline(polyline)
                         .stroke(.orange, lineWidth: 4)
+                }
+                
+                // Show destination marker (if exists)
+                if let destination = runTracker.plannedDestinationCoordinate {
+                    Annotation(runTracker.plannedDestinationName ?? "Destination", coordinate: destination) {
+                        ZStack {
+                            Circle()
+                                .fill(.red)
+                                .frame(width: 30, height: 30)
+                            Image(systemName: "flag.fill")
+                                .foregroundColor(.white)
+                                .font(.caption)
+                        }
+                    }
                 }
                 
                 // Show start marker
