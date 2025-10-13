@@ -33,6 +33,18 @@ struct CountDownView: View {
                 countdown -= 1
             } else {
                 countdownTimer.stopTimer()
+                
+                // Transfer planned route data from coordinator to runTracker
+                if let polyline = coordinator.plannedRoutePolyline,
+                   let destinationName = coordinator.plannedDestinationName,
+                   let destinationCoordinate = coordinator.plannedDestinationCoordinate {
+                    runTracker.setPlannedRoute(
+                        destinationName: destinationName,
+                        coordinate: destinationCoordinate,
+                        polyline: polyline
+                    )
+                }
+                
                 // Use coordinator for navigation
                 runTracker.startRun()
                 coordinator.countdownFinished()
