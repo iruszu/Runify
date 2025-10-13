@@ -9,29 +9,38 @@ import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
+    @SceneStorage("selectedTab") var selectedTab = 0 //keeps value alive as long as scene is active
     @StateObject private var coordinator = AppCoordinator()
     @StateObject private var runTracker = RunTracker()
     @State private var showRunOptions = false
     @Environment(\.modelContext) private var modelContext
     
     var body: some View {
-        TabView {
-            Tab("Home", systemImage: "house") {
+        TabView(selection: $selectedTab) {
+            Tab("Home", systemImage: "house", value: 0) {
                 HomeView()
+                    .environmentObject(coordinator)
                     .environmentObject(runTracker)
             }
-            Tab("Statistics", systemImage: "chart.line.uptrend.xyaxis") {
+            Tab("Health", systemImage: "chart.line.text.clipboard", value: 1) {
                 Text("Placeholder")
             }
-            Tab("Map", systemImage: "map", role: .search) {
+            Tab("Profile", systemImage: "person.circle", value: 2) {
+                ProfileView()
+                    .environmentObject(runTracker)
+            }
+            Tab("Map", systemImage: "map", value: 3) {
                 MapView()
                     .environmentObject(coordinator)
                     .environmentObject(runTracker)
             }
-            Tab("Profile", systemImage: "person.circle") {
-                ProfileView()
-                    .environmentObject(runTracker)
+            if selectedTab == 3 || selectedTab == 4 {
+                Tab("Search", systemImage: "magnifyingglass", value: 4, role: .search) {
+                    Text("hi")
+                }
+
             }
+
         }
         .fullScreenCover(isPresented: $coordinator.showRunningMap) {
             RunningMapView()
@@ -51,28 +60,6 @@ struct MainTabView: View {
                 .environmentObject(runTracker)
                 .environmentObject(coordinator)
         })
-        .tabViewBottomAccessory {
-            Button(action: {
-                showRunOptions = true
-            }, label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "figure.run")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                    
-                    Text("Start Run")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                }
-
-            })
-        }
-        .sheet(isPresented: $showRunOptions) {
-            RunOptionsSheet()
-                .environmentObject(coordinator)
-                .presentationBackground(.clear)
-        }
         .onAppear {
             // Inject modelContext into RunTracker
             runTracker.setModelContext(modelContext)
