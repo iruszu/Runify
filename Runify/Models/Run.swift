@@ -22,8 +22,8 @@ final class Run: Hashable { //final means we can't create a subcalss from it
     var pace: Double // min/km
     var startLocation: Coordinate?
     var locations: [Coordinate] // Route coordinates
+    var isFavorited: Bool = false // Track if run is favorited
     
-    // MARK: - Initialization
     
     init(
         locationName: String,
@@ -32,7 +32,8 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         duration: TimeInterval,
         pace: Double,
         startLocation: Coordinate? = nil,
-        locations: [Coordinate] = []
+        locations: [Coordinate] = [],
+        isFavorited: Bool = false
     ) {
         self.id = UUID()
         self.locationName = locationName
@@ -42,6 +43,7 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         self.pace = pace
         self.startLocation = startLocation
         self.locations = locations
+        self.isFavorited = isFavorited
     }
     
     // MARK: - Computed Properties
@@ -112,18 +114,14 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         String(format: "%.1f km/h", averageSpeed)
     }
     
-    // MARK: - Validation
     
-    /// Validates if the run data is reasonable
     var isValid: Bool {
         return distance > 0 &&
                duration > 0 &&
                pace > 0 &&
                !locationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-    
-    // MARK: - Utility Methods
-    
+        
     /// Updates the run with new data
     func update(
         locationName: String? = nil,
@@ -131,7 +129,8 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         duration: TimeInterval? = nil,
         pace: Double? = nil,
         startLocation: Coordinate? = nil,
-        locations: [Coordinate]? = nil
+        locations: [Coordinate]? = nil,
+        isFavorited: Bool? = nil
     ) {
         if let locationName = locationName {
             self.locationName = locationName
@@ -151,6 +150,14 @@ final class Run: Hashable { //final means we can't create a subcalss from it
         if let locations = locations {
             self.locations = locations
         }
+        if let isFavorited = isFavorited {
+            self.isFavorited = isFavorited
+        }
+    }
+    
+    /// Toggles the favorite status of the run
+    func toggleFavorite() {
+        isFavorited.toggle()
     }
 }
 
