@@ -35,11 +35,11 @@ struct HomeView: View {
             // Background map - zoomed to show user's region with planetary context
             Map(position: .constant(.region(MKCoordinateRegion(
                 center: runTracker.lastLocation?.coordinate ?? CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247),
-                span: MKCoordinateSpan(latitudeDelta: 70, longitudeDelta: 70)
+                span: MKCoordinateSpan(latitudeDelta: 50, longitudeDelta: 50)
             )))) {
                 // Empty map content - just showing the background
             }
-            .mapStyle(.hybrid(elevation: .realistic))
+            .mapStyle(.standard(emphasis: .muted, pointsOfInterest: .excludingAll, showsTraffic: false))
             .disabled(true) // Make it non-interactive
             .ignoresSafeArea()
             
