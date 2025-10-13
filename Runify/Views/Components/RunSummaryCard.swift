@@ -3,6 +3,7 @@ import MapKit
 
 struct RunSummaryCard: View {
     @EnvironmentObject var runTracker: RunTracker
+    @Environment(\.modelContext) private var modelContext
     @State private var showingEditSheet = false
     let run: Run
 
@@ -15,6 +16,20 @@ struct RunSummaryCard: View {
             RunDataView(run: run)
         }
         .glassEffect(.regular.tint(.black.opacity(0.1)), in: RoundedRectangle(cornerRadius: 16))
+        .overlay(alignment: .topTrailing) {
+            // Heart button for favoriting
+            Button {
+                run.toggleFavorite()
+                try? modelContext.save()
+            } label: {
+                Image(systemName: run.isFavorited ? "heart.fill" : "heart")
+                    .symbolEffect(.pulse, value: run.isFavorited)
+                    .foregroundColor(run.isFavorited ? .red : .white)
+                    .padding(12)
+                    
+            }
+           
+        }
         .onTapGesture {
             showingEditSheet = true
         }
