@@ -7,19 +7,64 @@
 
 import SwiftUI
 import MapKit
+import SwiftData
 
 struct MapView: View {
     @EnvironmentObject var runTracker: RunTracker
     @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(\.modelContext) private var modelContext
+    @Query private var runs: [Run]
+    
     @State private var hasInitialized = false
     @State private var showMapSelection = false
-    @State private var mapSelection: MapSelection<Int>?
+    @State private var selectedRun: Run?
+    @State private var showRunDetailSheet = false
+    @State private var showRouteOnMap = false
 
+    // MARK: - Computed Properties
+    
+    private var selectedRunPolyline: some MapContent {
+        Group {
+            if showRouteOnMap, let selectedRun = selectedRun, !selectedRun.locations.isEmpty {
+                let coordinates = selectedRun.locations.map { $0.clCoordinate }
+                let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+                MapPolyline(polyline)
+                    .stroke(.orange, lineWidth: 4)
+            }
+        }
+    }
+
+    
+    // MARK: - Methods
+    
+    private func handleRunSelection(_ run: Run) {
+        selectedRun = run
+        showRouteOnMap = true
+        showRunDetailSheet = true
+    }
+    
     var body: some View {
         NavigationStack {
             ZStack (alignment: .bottom) {
-            Map(position: $runTracker.staticRegion, selection: $mapSelection) {
-                UserAnnotation()
+                Map(position: $runTracker.staticRegion, selection: $selectedRun) {
+                    UserAnnotation()
+                    selectedRunPolyline
+                    
+                    ForEach(runs) { run in
+                        if let startLocation = run.startLocation {
+                            Marker(
+                                run.locationName,
+                                systemImage: "figure.run",
+                                coordinate: startLocation.clCoordinate
+                            )
+                            .tag(run)
+                        }
+                    }
+                }
+                .onChange(of: selectedRun) { oldValue, newValue in
+                    if let run = newValue {
+                        handleRunSelection(run)
+                    }
                 }
                 .mapStyle(runTracker.mapStyle)
                 .ignoresSafeArea(edges: .bottom)
@@ -28,9 +73,6 @@ struct MapView: View {
                     MapCompass()
                     MapPitchToggle()
                 }
-                .controlSize(.large)
-
-
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -45,6 +87,25 @@ struct MapView: View {
             .sheet(isPresented: $showMapSelection) {
                 MapSelectionSheet()
                     .environmentObject(runTracker)
+            }
+            .sheet(isPresented: Binding(
+                get: { showRunDetailSheet && selectedRun != nil },
+                set: { showRunDetailSheet = $0 }
+            )) {
+                if let selectedRun = selectedRun {
+                    RunDetailSheet(run: selectedRun)
+                        .environmentObject(runTracker)
+                        .presentationDetents([.medium])
+                        .presentationDragIndicator(.visible)
+                        .presentationBackgroundInteraction(.enabled)
+                }
+            }
+            .onChange(of: showRunDetailSheet) { oldValue, newValue in
+                if !newValue {
+                    // Clear the route and selection when sheet is dismissed
+                    showRouteOnMap = false
+                    selectedRun = nil
+                }
             }
 
             
