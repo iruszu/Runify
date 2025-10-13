@@ -34,12 +34,6 @@ struct MainTabView: View {
                     .environmentObject(coordinator)
                     .environmentObject(runTracker)
             }
-            if selectedTab == 3 || selectedTab == 4 {
-                Tab("Search", systemImage: "magnifyingglass", value: 4, role: .search) {
-                    Text("hi")
-                }
-
-            }
 
         }
         .fullScreenCover(isPresented: $coordinator.showRunningMap) {
@@ -47,9 +41,7 @@ struct MainTabView: View {
                 .environmentObject(runTracker)
                 .environmentObject(coordinator)
         }
-        .transaction { transaction in
-            transaction.disablesAnimations = true // Disable animations for the transition
-        }
+
         .fullScreenCover(isPresented: $coordinator.showCountdown, content: {
             CountDownView()
                 .environmentObject(runTracker) // Pass the RunTracker to the countdown view

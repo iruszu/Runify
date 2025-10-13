@@ -29,6 +29,7 @@ struct MapView: View {
     @State private var showRouteOnMap = false
     @State private var showFavouriteRunsOnly: Bool = false
     @State private var showRunOptions = false
+    @State private var showSearchSheet = false
 
     // MARK: - Computed Properties
     
@@ -100,15 +101,6 @@ struct MapView: View {
                 }
             }
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showMapSelection = true
-                    }) {
-                        Image(systemName: "map")
-                            .foregroundColor(.primary)
-                    }
-                }
-                ToolbarSpacer(.fixed, placement: .topBarTrailing)
                 ToolbarItem(placement: .topBarLeading) {
                     Button(action: {
                         // filter markers by favourited
@@ -118,7 +110,24 @@ struct MapView: View {
                         Image(systemName: showFavouriteRunsOnly ? "heart.fill" : "heart")
                             .foregroundColor(showFavouriteRunsOnly ? .red : .white)
                     }
-                    
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showSearchSheet = true
+                    }) {
+                        Image(systemName: "magnifyingglass")
+                            .foregroundColor(.primary)
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showMapSelection = true
+                    }) {
+                        Image(systemName: "map")
+                            .foregroundColor(.primary)
+                    }
                 }
             }
             .sheet(isPresented: $showMapSelection) {
@@ -129,6 +138,13 @@ struct MapView: View {
                 RunOptionsSheet()
                     .environmentObject(coordinator)
                     .presentationBackground(.clear)
+            }
+            .sheet(isPresented: $showSearchSheet) {
+                SearchSheet()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                    .environmentObject(runTracker)
+                    .environmentObject(coordinator)
             }
             .sheet(isPresented: Binding(
                 get: { showRunDetailSheet && selectedRun != nil },

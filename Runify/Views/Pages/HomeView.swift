@@ -15,6 +15,20 @@ struct HomeView: View {
     @EnvironmentObject var runTracker: RunTracker
     @Query(sort: \Run.date, order: .reverse) private var runs: [Run]
     @State private var showRunOptions = false
+    @State private var pulseAnimation = false
+    
+    // Computed property for time-based greeting
+    private var greeting: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 0..<12:
+            return "Good Morning,"
+        case 12..<17:
+            return "Good Afternoon,"
+        default:
+            return "Good Evening,"
+        }
+    }
     
     var body: some View {
         ZStack {
@@ -28,7 +42,19 @@ struct HomeView: View {
             .mapStyle(.hybrid(elevation: .realistic))
             .disabled(true) // Make it non-interactive
             .ignoresSafeArea()
-
+            
+            // Black gradient overlay
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    Color.black.opacity(0.7),
+                    Color.black.opacity(0.5),
+                    Color.black.opacity(0.3),
+                    Color.black.opacity(0.1)
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
             // Main content
             ScrollView(.vertical, showsIndicators: false) {
@@ -40,28 +66,61 @@ struct HomeView: View {
                     
                     if runs.isEmpty {
                         VStack(spacing: 20) {
+                            Text(greeting)
+                                .font(.subheadline)
+                                .padding(.horizontal, 20)
+                                .opacity(0.7)
+                                .offset(y: 20)
+          
+                            Text("Kellie Ho")
+                                .font(.largeTitle)
+                                .bold()
+                                .padding(.horizontal, 20)
+  
+                            
+                            
                             Image(systemName: "figure.run")
                                 .font(.system(size: 60))
                                 .foregroundColor(.secondary)
+                                .padding(.top, 30)
                             
-                            Text("No runs yet")
+                            
+                            Text("Get started with your first run.")
                                 .font(.title2)
                                 .fontWeight(.medium)
                             
-                            Text("Complete your first run to see it here")
-                                .font(.body)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
+                            
+                            StartRunButton {
+                                showRunOptions = true
+                            }
+                            .padding(.top, 100)
+                            .shadow(
+                                color: Color.white.opacity(pulseAnimation ? 0.8 : 0.3),
+                                radius: pulseAnimation ? 30 : 15,
+                                x: 0,
+                                y: 0
+                            )
+                            .scaleEffect(pulseAnimation ? 1.05 : 1.0)
+                            .onAppear {
+                                withAnimation(
+                                    .easeInOut(duration: 1.5)
+                                    .repeatForever(autoreverses: true)
+                                ) {
+                                    pulseAnimation = true
+                                }
+                            }
+                            
+                            
                         }
                         .padding()
                         .frame(maxWidth: .infinity, minHeight: 400)
                     } else {
-                        Text("Good Afternoon,")
+                        Text(greeting)
                             .font(.subheadline)
                             .padding(.horizontal, 20)
                             .opacity(0.7)
                             .offset(y: 20)
-                            .padding(.trailing, 220)
+                            .padding(.trailing, 230)
                         Text("Kellie Ho")
                             .font(.largeTitle)
                             .bold()
@@ -70,16 +129,24 @@ struct HomeView: View {
 
                         // Horizontal scroll view of run summary cards
                         ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(spacing: 20) {
+                            LazyHStack(spacing: 10) {
                                 ForEach(runs, id: \.id) { run in
                                     RunSummaryCard(run: run)
                                         .frame(width: 300)
+                                        // OPTION 1: Scale + Fade Effect (Subtle zoom)
+                                        .scrollTransition { content, phase in
+                                            content
+                                                .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
+                                                .opacity(phase.isIdentity ? 1.0 : 0.5)
+                                        }
+
                                 }
                             }
                             .scrollTargetLayout()
-                            .padding(.horizontal, (UIScreen.main.bounds.width - 330) / 2) // Center the first card with new width
+                            .padding(.horizontal, runs.count == 1 ? (UIScreen.main.bounds.width - 300) / 2 : (UIScreen.main.bounds.width - 330) / 2) // Center when one run, otherwise center first card
                         }
                         .scrollTargetBehavior(.viewAligned)
+                        .scrollDisabled(runs.count == 1) // Disable scrolling when only one run
                         
                         StartRunButton {
                             showRunOptions = true
