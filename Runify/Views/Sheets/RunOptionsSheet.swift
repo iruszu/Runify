@@ -16,7 +16,6 @@ struct RunOptionsSheet: View {
     
     @State private var selectedLocation: MKMapItem?
     @State private var isGoSelected: Bool = true
-    @State private var showLocationDetail = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -58,7 +57,7 @@ struct RunOptionsSheet: View {
                             
                             Spacer()
                             
-                            if isGoSelected && selectedRoute == nil {
+                            if isGoSelected && selectedLocation == nil {
                                 Image(systemName: "checkmark.circle.fill")
                                     .foregroundColor(.accentColor)
                                     .font(.title3)
@@ -68,7 +67,7 @@ struct RunOptionsSheet: View {
                         .padding(.vertical, 16)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
-                                .fill(isGoSelected && selectedRoute == nil ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
+                                .fill(isGoSelected && selectedLocation == nil ? Color.accentColor.opacity(0.1) : Color(.systemGray6))
                         )
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -106,7 +105,6 @@ struct RunOptionsSheet: View {
                                         ) {
                                             selectedLocation = mapItem
                                             isGoSelected = false
-                                            showLocationDetail = true
                                         }
                                     }
                                 }
@@ -128,15 +126,6 @@ struct RunOptionsSheet: View {
         }
         .presentationDetents([.fraction(0.6)])
         .presentationDragIndicator(.hidden)
-        .sheet(isPresented: $showLocationDetail) {
-            if let location = selectedLocation {
-                LocationSheet(mapItem: location, routeDistance: 0)
-                    .environmentObject(runTracker)
-                    .environmentObject(coordinator)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
-        }
         .onAppear {
             viewModel.setRunTracker(runTracker)
             viewModel.loadRecommendedRoutes()
@@ -145,11 +134,57 @@ struct RunOptionsSheet: View {
        
     
     private func handleStartRun() {
-        dismiss()
+        // If a route is selected, calculate the route first
+        if let selectedLocation = selectedLocation {
+            calculateRouteAndStart(to: selectedLocation)
+        } else {
+            // Just start a regular run
+            dismiss()
+            coordinator.navigateToCountdown()
+        }
+    }
+    
+    private func calculateRouteAndStart(to mapItem: MKMapItem) {
+        guard let userLocation = runTracker.lastLocation else {
+            // If no user location, just start regular run
+            dismiss()
+            coordinator.navigateToCountdown()
+            return
+        }
         
-        // Start countdown immediately
-        // TODO: Pass selected route to run tracker if a route is selected
-        coordinator.navigateToCountdown()
+        let request = MKDirections.Request()
+        request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation.coordinate))
+        request.destination = mapItem
+        request.transportType = .walking
+        
+        let directions = MKDirections(request: request)
+        
+        Task {
+            do {
+                let response = try await directions.calculate()
+                if let route = response.routes.first {
+                    await MainActor.run {
+                        // Set planned route in coordinator
+                        coordinator.setPlannedRoute(
+                            destinationName: mapItem.name ?? "Unknown Location",
+                            coordinate: mapItem.placemark.coordinate,
+                            polyline: route.polyline
+                        )
+                        
+                        // Dismiss and start countdown
+                        dismiss()
+                        coordinator.navigateToCountdown()
+                    }
+                }
+            } catch {
+                print("Route calculation error: \(error.localizedDescription)")
+                // If route calculation fails, just start regular run
+                await MainActor.run {
+                    dismiss()
+                    coordinator.navigateToCountdown()
+                }
+            }
+        }
     }
 }
 
