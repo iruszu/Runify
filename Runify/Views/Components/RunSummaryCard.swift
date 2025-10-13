@@ -121,49 +121,7 @@ struct MapSnapshotView: View {
     // MARK: - Helper Functions
     
     private func calculateRouteRegion() -> MKCoordinateRegion {
-        guard !run.locations.isEmpty else {
-            // Fallback to start location if no route data
-            if let startLocation = run.startLocation {
-                return MKCoordinateRegion(
-                    center: startLocation.clCoordinate,
-                    span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-                )
-            }
-            // Default region if no location data
-            return MKCoordinateRegion(
-                center: CLLocationCoordinate2D(latitude: 0, longitude: 0),
-                span: MKCoordinateSpan(latitudeDelta: 0.01, longitudeDelta: 0.01)
-            )
-        }
-        
-        // Calculate bounds of the route
-        let coordinates = run.locations.map { $0.clCoordinate }
-        
-        var minLat = coordinates.first?.latitude ?? 0
-        var maxLat = coordinates.first?.latitude ?? 0
-        var minLon = coordinates.first?.longitude ?? 0
-        var maxLon = coordinates.first?.longitude ?? 0
-        
-        for coordinate in coordinates {
-            minLat = min(minLat, coordinate.latitude)
-            maxLat = max(maxLat, coordinate.latitude)
-            minLon = min(minLon, coordinate.longitude)
-            maxLon = max(maxLon, coordinate.longitude)
-        }
-        
-        // Calculate center and span
-        let centerLat = (minLat + maxLat) / 2
-        let centerLon = (minLon + maxLon) / 2
-        let center = CLLocationCoordinate2D(latitude: centerLat, longitude: centerLon)
-        
-        // Add padding to the span
-        let latDelta = max(maxLat - minLat, 0.001) * 1.2 // 20% padding
-        let lonDelta = max(maxLon - minLon, 0.001) * 1.2 // 20% padding
-        
-        return MKCoordinateRegion(
-            center: center,
-            span: MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lonDelta)
-        )
+        return MapRegionCalculator.calculateRouteRegion(for: run)
     }
 }
 
