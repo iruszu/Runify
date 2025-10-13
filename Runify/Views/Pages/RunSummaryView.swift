@@ -108,7 +108,7 @@ struct RunSummaryView: View {
             Spacer()
             
             Button {
-                coordinator.finishRunSummary()
+                coordinator.resetToHome()
             } label: {
                 Text("Done")
                     .font(.title2)
