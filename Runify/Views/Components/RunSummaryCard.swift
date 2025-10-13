@@ -86,12 +86,34 @@ struct MapSnapshotView: View {
                 let region = calculateRouteRegion()
                 
                 Map(position: .constant(.region(region))) {
-                    // Show route if available
+                    // Show planned route (if exists) - semi-transparent blue
+                    if let plannedRoute = run.plannedRoute, !plannedRoute.isEmpty {
+                        let coordinates = plannedRoute.map { $0.clCoordinate }
+                        let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
+                        MapPolyline(polyline)
+                            .stroke(.blue.opacity(0.5), lineWidth: 4)
+                    }
+                    
+                    // Show actual route - solid orange
                     if !run.locations.isEmpty && run.locations.count > 1 {
                         let coordinates = run.locations.map { $0.clCoordinate }
                         let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                         MapPolyline(polyline)
                             .stroke(.orange, lineWidth: 4)
+                    }
+                    
+                    // Show destination marker (if exists)
+                    if let destination = run.destinationCoordinate {
+                        Annotation(run.destinationName ?? "Destination", coordinate: destination.clCoordinate) {
+                            ZStack {
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 20, height: 20)
+                                Image(systemName: "flag.fill")
+                                    .foregroundColor(.white)
+                                    .font(.caption2)
+                            }
+                        }
                     }
                     
                     // Start marker
@@ -156,7 +178,7 @@ struct RunDataView: View {
             // Run Title and Date
             VStack(alignment: .leading, spacing: 4) {
                 Text(run.locationName)
-                    .font(.title)
+                    .font(.title2)
                     .fontWeight(.bold)
                     .foregroundColor(.white)
                     .shadow(radius: 4)
@@ -198,7 +220,7 @@ struct MetricView: View {
                 .shadow(radius: 4)
             
             Text(value + (unit != nil ? " \(unit!)" : ""))
-                .font(.title3)
+                .font(.subheadline)
                 .fontWeight(.bold)
                 .foregroundColor(.white)
             
