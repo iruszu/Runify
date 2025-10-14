@@ -58,7 +58,7 @@ struct HomeView: View {
             
             // Main content
             ScrollView(.vertical, showsIndicators: false) {
-            VStack(alignment: .center, spacing: 20) {
+            VStack(alignment: .center, spacing: 10) {
                     DateCard(date: Date())
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
@@ -120,38 +120,42 @@ struct HomeView: View {
                             .padding(.horizontal, 20)
                             .opacity(0.7)
                             .offset(y: 20)
-                            .padding(.trailing, 230)
-                        Text("Kellie Ho")
+                            .padding(.trailing, 240)
+                            .padding(.bottom, 10)
+                        Text("Ready to run?")
                             .font(.largeTitle)
                             .bold()
-                            .padding(.horizontal, 20)
-                            .padding(.trailing, 200)
-
+                            .padding(.horizontal, 30)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                     
+         
                         // Horizontal scroll view of run summary cards
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            LazyHStack(spacing: 10) {
-                                ForEach(runs, id: \.id) { run in
-                                    RunSummaryCard(run: run)
-                                        .frame(width: 300)
-                                        // OPTION 1: Scale + Fade Effect (Subtle zoom)
-                                        .scrollTransition { content, phase in
-                                            content
-                                                .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
-                                                .opacity(phase.isIdentity ? 1.0 : 0.5)
-                                        }
+                        GeometryReader { geometry in
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                LazyHStack(spacing: 10) {
+                                    ForEach(runs, id: \.id) { run in
+                                        RunSummaryCard(run: run)
+                                        
+                                            // OPTION 1: Scale + Fade Effect (Subtle zoom)
+                                            .scrollTransition { content, phase in
+                                                content
+                                                    .scaleEffect(phase.isIdentity ? 1.0 : 0.85)
+                                                    .opacity(phase.isIdentity ? 1.0 : 0.5)
+                                            }
 
+                                    }
                                 }
+                                .scrollTargetLayout()
+                                .padding(.horizontal, runs.count == 1 ? (geometry.size.width - 300) / 2 : (geometry.size.width - 330) / 2) // Center when one run, otherwise center first card
                             }
-                            .scrollTargetLayout()
-                            .padding(.horizontal, runs.count == 1 ? (UIScreen.main.bounds.width - 300) / 2 : (UIScreen.main.bounds.width - 330) / 2) // Center when one run, otherwise center first card
+                            .scrollTargetBehavior(.viewAligned)
+                            .scrollDisabled(runs.count == 1) // Disable scrolling when only one run
                         }
-                        .scrollTargetBehavior(.viewAligned)
-                        .scrollDisabled(runs.count == 1) // Disable scrolling when only one run
+                        .frame(height: 450)
                         
                         StartRunButton {
                             showRunOptions = true
                         }
-                        .padding(.top, 20)
                         
 
                     }

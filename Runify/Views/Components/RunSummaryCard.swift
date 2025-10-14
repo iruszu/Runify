@@ -8,15 +8,15 @@ struct RunSummaryCard: View {
     let run: Run
 
     var body: some View {
-        ZStack() {
-            // Map Section (Top 2/3)
+        ZStack {
             MapSnapshotView(snapshot: nil, run: run, mapStyle: runTracker.mapStyle)
-
-            
-            // Run Data Section (Bottom 1/3)
             RunDataView(run: run)
- 
+                .padding(.top, 200)
+                .offset(x: 20, y: 20)
+    
+
         }
+        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
         .overlay(alignment: .topTrailing) {
             // Heart button for favoriting
             Button {
@@ -27,6 +27,7 @@ struct RunSummaryCard: View {
                     .font(.system(size: 25))
                    .foregroundColor(run.isFavorited ? .red : .white)
                     .padding(20)
+                    .symbolEffect(.bounce, value: run.isFavorited)
                     
             }
            
@@ -134,8 +135,7 @@ struct MapSnapshotView: View {
                         .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
                 )
             }
-            
-            // Inner shadow overlay
+
             VStack {
                 Spacer()
                 
@@ -150,12 +150,13 @@ struct MapSnapshotView: View {
                      endPoint: .bottom
                  )
                  .frame(height: 300)
+                
                  .blendMode(.multiply)
             }
         }
-        .frame(height: 400) // Reduced height
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .opacity(0.9)
+        .frame(width: 300, height: 400) // Reduced height
+
+
 
     }
     
@@ -169,10 +170,6 @@ struct MapSnapshotView: View {
 // Run Data Section Component
 struct RunDataView: View {
     let run: Run
-    
-    
-
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // Run Title and Date
@@ -184,7 +181,7 @@ struct RunDataView: View {
                     .shadow(radius: 4)
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .frame(maxWidth: UIScreen.main.bounds.width * 0.6, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(run.formattedDate)
                     .font(.subheadline)
@@ -200,9 +197,7 @@ struct RunDataView: View {
             }
             
         }
-        .padding(.top, 250) // Move content to bottom of card
-        .padding(.leading, -20)
-        .frame(maxWidth: .infinity, alignment: .center) // Center the content
+        .frame(width: 300, height: 100)
    
     }
 }
