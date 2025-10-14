@@ -186,41 +186,45 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     // MARK: - Reverse Geocoding
-    
+
     private func getLocationName(from location: CLLocation?, completion: @escaping (String) -> Void) {
         guard let location = location else {
             completion("Unknown Location")
             return
         }
-        
-        let geocoder = CLGeocoder()
-        geocoder.reverseGeocodeLocation(location) { placemarks, error in
-            DispatchQueue.main.async {
-                if let error = error {
+
+        // Use MKReverseGeocodingRequest for iOS 26.0+
+        guard let request = MKReverseGeocodingRequest(location: location) else {
+            completion("Unknown Location")
+            return
+        }
+
+        Task {
+            do {
+                let mapItems = try await request.mapItems
+
+                await MainActor.run {
+                    guard let mapItem = mapItems.first else {
+                        completion("Unknown Location")
+                        return
+                    }
+
+                    // Try to get a meaningful location name
+                    var locationName = "Unknown Location"
+
+                    if let name = mapItem.name {
+                        locationName = name
+                    } else if let fullAddress = mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true) {
+                        locationName = fullAddress
+                    }
+
+                    completion(locationName)
+                }
+            } catch {
+                await MainActor.run {
                     print("Reverse geocoding error: \(error.localizedDescription)")
                     completion("Unknown Location")
-                    return
                 }
-                
-                guard let placemark = placemarks?.first else {
-                    completion("Unknown Location")
-                    return
-                }
-                
-                // Try to get a meaningful location name
-                var locationName = "Unknown Location"
-                
-                if let name = placemark.name {
-                    locationName = name
-                } else if let thoroughfare = placemark.thoroughfare {
-                    locationName = thoroughfare
-                } else if let locality = placemark.locality {
-                    locationName = locality
-                } else if let administrativeArea = placemark.administrativeArea {
-                    locationName = administrativeArea
-                }
-                
-                completion(locationName)
             }
         }
     }
