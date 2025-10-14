@@ -157,6 +157,154 @@ struct ProfileView: View {
         return earned
     }
     
+    // MARK: - Helper Functions
+    
+    private func formatDistance(_ distanceInKilometers: Double) -> String {
+        if distanceInKilometers < 0.1 {
+            // Display in meters for very short runs
+            let meters = distanceInKilometers * 1000
+            return String(format: "%.0f m", meters)
+        } else {
+            // Display in kilometers for longer runs
+            return String(format: "%.1f km", distanceInKilometers)
+        }
+    }
+    
+    // MARK: - Additional Stats
+    
+    private var currentStreak: Int {
+        let calendar = Calendar.current
+        let today = Date()
+        var streak = 0
+        var currentDate = today
+        
+        while true {
+            let hasRunOnDate = runs.contains { run in
+                calendar.isDate(run.date, inSameDayAs: currentDate)
+            }
+            
+            if hasRunOnDate {
+                streak += 1
+                currentDate = calendar.date(byAdding: .day, value: -1, to: currentDate) ?? currentDate
+            } else {
+                break
+            }
+        }
+        
+        return streak
+    }
+    
+    private var averageRunDuration: TimeInterval {
+        guard !runs.isEmpty else { return 0 }
+        return runs.reduce(0) { $0 + $1.duration } / Double(runs.count)
+    }
+    
+    private var totalRunningTime: TimeInterval {
+        runs.reduce(0) { $0 + $1.duration }
+    }
+    
+    private var paceTrendData: [PaceData] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Filter runs based on selected time period
+        let filteredRuns: [Run]
+        switch selectedTimePeriod {
+        case .day:
+            filteredRuns = runs.filter { calendar.isDate($0.date, inSameDayAs: now) }
+        case .week:
+            let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            let endOfWeek = calendar.date(byAdding: .day, value: 6, to: startOfWeek) ?? now
+            filteredRuns = runs.filter { $0.date >= startOfWeek && $0.date <= endOfWeek }
+        case .month:
+            let startOfMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) ?? now
+            filteredRuns = runs.filter { $0.date >= startOfMonth && $0.date < endOfMonth }
+        case .year:
+            let startOfYear = calendar.dateInterval(of: .year, for: now)?.start ?? now
+            let endOfYear = calendar.date(byAdding: .year, value: 1, to: startOfYear) ?? now
+            filteredRuns = runs.filter { $0.date >= startOfYear && $0.date < endOfYear }
+        }
+        
+        return filteredRuns
+            .sorted { $0.date < $1.date }
+            .enumerated()
+            .map { index, run in
+                PaceData(
+                    day: index + 1,
+                    pace: run.pace,
+                    date: run.date
+                )
+            }
+    }
+    
+    private var weeklyFrequencyData: [FrequencyData] {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // Determine the range based on selected time period
+        let startDate: Date
+        let endDate: Date
+        let periodCount: Int
+        
+        switch selectedTimePeriod {
+        case .day:
+            let dayStart = calendar.startOfDay(for: now)
+            let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) ?? now
+            startDate = dayStart
+            endDate = dayEnd
+            periodCount = 24 // Show hourly data
+        case .week:
+            let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) ?? now
+            startDate = weekStart
+            endDate = weekEnd
+            periodCount = 7 // Show daily data
+        case .month:
+            let monthStart = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) ?? now
+            startDate = monthStart
+            endDate = monthEnd
+            periodCount = 4 // Show weekly data
+        case .year:
+            let yearStart = calendar.dateInterval(of: .year, for: now)?.start ?? now
+            let yearEnd = calendar.date(byAdding: .year, value: 1, to: yearStart) ?? now
+            startDate = yearStart
+            endDate = yearEnd
+            periodCount = 12 // Show monthly data
+        }
+        
+        return (0..<periodCount).compactMap { periodOffset in
+            let periodStart: Date
+            let periodEnd: Date
+            
+            switch selectedTimePeriod {
+            case .day:
+                periodStart = calendar.date(byAdding: .hour, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .hour, value: 1, to: periodStart) ?? periodStart
+            case .week:
+                periodStart = calendar.date(byAdding: .day, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .day, value: 1, to: periodStart) ?? periodStart
+            case .month:
+                periodStart = calendar.date(byAdding: .weekOfYear, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: periodStart) ?? periodStart
+            case .year:
+                periodStart = calendar.date(byAdding: .month, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .month, value: 1, to: periodStart) ?? periodStart
+            }
+            
+            let periodRuns = runs.filter { run in
+                run.date >= periodStart && run.date < periodEnd
+            }
+            
+            return FrequencyData(
+                week: periodOffset + 1,
+                runs: periodRuns.count,
+                weekStart: periodStart
+            )
+        }
+    }
+    
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
@@ -200,6 +348,27 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal, 20)
                     .animation(.easeInOut(duration: 0.3), value: selectedTimePeriod)
+                    
+                    // Additional Stats Row
+                    HStack(spacing: 20) {
+                        StatCard(
+                            title: "Current Streak", 
+                            value: "\(currentStreak) days", 
+                            icon: "flame.fill"
+                        )
+                        StatCard(
+                            title: "Avg Duration", 
+                            value: String(format: "%.0f min", averageRunDuration / 60), 
+                            icon: "clock"
+                        )
+                        StatCard(
+                            title: "Total Time", 
+                            value: String(format: "%.0f hrs", totalRunningTime / 3600), 
+                            icon: "hourglass"
+                        )
+                    }
+                    .padding(.horizontal, 20)
+                    .animation(.easeInOut(duration: 0.3), value: selectedTimePeriod)
                 }
                 
                 // Progress Chart
@@ -235,6 +404,80 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
                 }
                 
+                // Pace Trend Chart
+                if !paceTrendData.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Pace Trend (\(selectedTimePeriod.displayName))")
+                            .font(.headline)
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 20)
+                        
+                        Chart(paceTrendData, id: \.day) { data in
+                            LineMark(
+                                x: .value("Run", data.day),
+                                y: .value("Pace (min/km)", data.pace)
+                            )
+                            .foregroundStyle(.blue.gradient)
+                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
+                            
+                            AreaMark(
+                                x: .value("Run", data.day),
+                                y: .value("Pace (min/km)", data.pace)
+                            )
+                            .foregroundStyle(.blue.opacity(0.1))
+                        }
+                        .frame(height: 200)
+                        .padding(.horizontal, 20)
+                        .chartYAxis {
+                            AxisMarks { value in
+                                AxisGridLine()
+                                    .foregroundStyle(.gray.opacity(0.3))
+                                AxisValueLabel {
+                                    if let paceValue = value.as(Double.self) {
+                                        Text("\(String(format: "%.1f", paceValue))")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
+                }
+                
+                // Running Frequency Chart
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Running Frequency (\(selectedTimePeriod.displayName))")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .padding(.horizontal, 20)
+                    
+                    Chart(weeklyFrequencyData, id: \.week) { data in
+                        BarMark(
+                            x: .value("Week", data.week),
+                            y: .value("Runs", data.runs)
+                        )
+                        .foregroundStyle(.green.gradient)
+                        .cornerRadius(4)
+                    }
+                    .frame(height: 200)
+                    .padding(.horizontal, 20)
+                    .chartYAxis {
+                        AxisMarks { value in
+                            AxisGridLine()
+                                .foregroundStyle(.gray.opacity(0.3))
+                            AxisValueLabel {
+                                if let runsValue = value.as(Int.self) {
+                                    Text("\(runsValue)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
+                }
+                
                 // Personal Records
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Personal Records")
@@ -253,7 +496,7 @@ struct ProfileView: View {
                         if let longestRun = personalRecords.longestRun {
                             RecordRow(
                                 title: "Longest Run", 
-                                value: String(format: "%.1f km", longestRun.distanceInKilometers), 
+                                value: formatDistance(longestRun.distanceInKilometers), 
                                 date: longestRun.formattedDate
                             )
                         }
@@ -454,6 +697,18 @@ struct ChartData {
     let label: String
     let distance: Double
     let date: Date
+}
+
+struct PaceData {
+    let day: Int
+    let pace: Double
+    let date: Date
+}
+
+struct FrequencyData {
+    let week: Int
+    let runs: Int
+    let weekStart: Date
 }
 
 struct Achievement {
