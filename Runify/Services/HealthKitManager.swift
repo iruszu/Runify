@@ -71,7 +71,7 @@ class HealthKitManager: ObservableObject {
             quantitySamplePredicate: predicate,
             options: .cumulativeSum
         ) { [weak self] _, result, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 // If we can read data, we're authorized
                 if error == nil && result != nil {
                     self?.isAuthorized = true
@@ -84,7 +84,7 @@ class HealthKitManager: ObservableObject {
                 }
             }
         }
-        
+
         healthStore.execute(query)
     }
     
@@ -114,40 +114,7 @@ class HealthKitManager: ObservableObject {
     }
     
     // MARK: - Save Workout
-    
-    func saveWorkout(
-        startDate: Date,
-        endDate: Date,
-        distance: Double, // in meters
-        calories: Double,
-        heartRateSamples: [(Date, Double)] = [],
-        completion: @escaping (Bool, Error?) -> Void
-    ) {
-        guard isAuthorized else {
-            completion(false, NSError(domain: "HealthKit", code: 2,
-                userInfo: [NSLocalizedDescriptionKey: "Not authorized to write to HealthKit"]))
-            return
-        }
-        
-        // Create workout
-        let workout = HKWorkout(
-            activityType: .running,
-            start: startDate,
-            end: endDate,
-            duration: endDate.timeIntervalSince(startDate),
-            totalEnergyBurned: HKQuantity(unit: .kilocalorie(), doubleValue: calories),
-            totalDistance: HKQuantity(unit: .meter(), doubleValue: distance),
-            metadata: nil
-        )
-        
-        // Save workout
-        healthStore.save(workout) { success, error in
-            DispatchQueue.main.async {
-                completion(success, error)
-            }
-        }
-    }
-    
+
     // MARK: - Read Step Count
     
     /// Read today's step count
@@ -173,13 +140,13 @@ class HealthKitManager: ObservableObject {
                 print("Failed to read step count: \(error?.localizedDescription ?? "UNKNOWN ERROR")")
                 return
             }
-            
+
             let steps = Int(sum.doubleValue(for: HKUnit.count()))
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.stepCountToday = steps
             }
         }
-        
+
         healthStore.execute(query)
     }
     
@@ -225,18 +192,18 @@ class HealthKitManager: ObservableObject {
                 }
                 return
             }
-            
+
             result.enumerateStatistics(from: startOfWeek, to: endOfWeek) { statistics, _ in
                 if let quantity = statistics.sumQuantity() {
                     let steps = Int(quantity.doubleValue(for: HKUnit.count()))
                     let day = calendar.component(.weekday, from: statistics.startDate)
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
                         self?.thisWeekSteps[day] = steps
                     }
                 }
             }
         }
-        
+
         healthStore.execute(query)
     }
     

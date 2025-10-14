@@ -31,7 +31,7 @@ struct MainTabView: View {
                 ProfileView()
                     .environmentObject(runTracker)
             }
-            Tab("Map", systemImage: "map", value: 3) {
+            Tab("Map", systemImage: "map", value: 3, role: .search) {
                 MapView()
                     .environmentObject(coordinator)
                     .environmentObject(runTracker)

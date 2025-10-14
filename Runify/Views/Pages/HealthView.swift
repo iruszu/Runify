@@ -226,7 +226,6 @@ struct HealthView: View {
                         .padding(.top, 20)
                     }
                 }
-                .padding(.top, 20)
             }
             .navigationTitle("Health")
             .onAppear {
