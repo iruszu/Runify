@@ -170,6 +170,46 @@ struct ProfileView: View {
         }
     }
     
+    private func formatDayLabel(for date: Date, timePeriod: TimePeriod) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        switch timePeriod {
+        case .day:
+            formatter.dateFormat = "HH:mm"
+            return formatter.string(from: date)
+        case .week:
+            formatter.dateFormat = "E"
+            return formatter.string(from: date)
+        case .month:
+            let weekOfMonth = calendar.component(.weekOfMonth, from: date)
+            return "W\(weekOfMonth)"
+        case .year:
+            formatter.dateFormat = "MMM"
+            return formatter.string(from: date)
+        }
+    }
+    
+    private func formatPeriodLabel(for date: Date, timePeriod: TimePeriod, offset: Int) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        switch timePeriod {
+        case .day:
+            formatter.dateFormat = "HH:mm"
+            return formatter.string(from: date)
+        case .week:
+            formatter.dateFormat = "E"
+            return formatter.string(from: date)
+        case .month:
+            let weekOfMonth = calendar.component(.weekOfMonth, from: date)
+            return "W\(weekOfMonth)"
+        case .year:
+            formatter.dateFormat = "MMM"
+            return formatter.string(from: date)
+        }
+    }
+    
     // MARK: - Additional Stats
     
     private var currentStreak: Int {
@@ -228,10 +268,10 @@ struct ProfileView: View {
         
         return filteredRuns
             .sorted { $0.date < $1.date }
-            .enumerated()
-            .map { index, run in
-                PaceData(
-                    day: index + 1,
+            .map { run in
+                let dayName = formatDayLabel(for: run.date, timePeriod: selectedTimePeriod)
+                return PaceData(
+                    day: dayName,
                     pace: run.pace,
                     date: run.date
                 )
@@ -297,8 +337,9 @@ struct ProfileView: View {
                 run.date >= periodStart && run.date < periodEnd
             }
             
+            let periodLabel = formatPeriodLabel(for: periodStart, timePeriod: selectedTimePeriod, offset: periodOffset)
             return FrequencyData(
-                week: periodOffset + 1,
+                week: periodLabel,
                 runs: periodRuns.count,
                 weekStart: periodStart
             )
@@ -700,13 +741,13 @@ struct ChartData {
 }
 
 struct PaceData {
-    let day: Int
+    let day: String
     let pace: Double
     let date: Date
 }
 
 struct FrequencyData {
-    let week: Int
+    let week: String
     let runs: Int
     let weekStart: Date
 }
