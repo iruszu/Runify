@@ -17,12 +17,15 @@ struct SearchResultRow: View {
         guard let userLocation = userLocation else { return nil }
         
         let userCLLocation = CLLocation(latitude: userLocation.latitude, longitude: userLocation.longitude)
-        let itemLocation = CLLocation(latitude: mapItem.placemark.coordinate.latitude, longitude: mapItem.placemark.coordinate.longitude)
         
-        let distanceInMeters = userCLLocation.distance(from: itemLocation)
+        let distanceInMeters = userCLLocation.distance(from: mapItem.location)
         let distanceInKm = distanceInMeters / 1000
         
         return String(format: "%.1f km", distanceInKm)
+    }
+    
+    private var formattedAddress: String? {
+        return mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
     }
     
     var body: some View {
@@ -39,7 +42,7 @@ struct SearchResultRow: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
                     
-                    if let address = mapItem.placemark.title {
+                    if let address = formattedAddress {
                         Text(address)
                             .font(.caption)
                             .foregroundColor(.secondary)

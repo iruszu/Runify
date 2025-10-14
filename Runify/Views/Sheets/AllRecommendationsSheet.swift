@@ -231,9 +231,7 @@ struct AllRecommendationsSheet: View {
         do {
             let response = try await search.start()
             let sorted = response.mapItems.sorted { item1, item2 in
-                let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                return userLocation.distance(from: location1) < userLocation.distance(from: location2)
+                return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
             }
             
             await MainActor.run {
@@ -253,9 +251,7 @@ struct AllRecommendationsSheet: View {
         do {
             let response = try await search.start()
             let sorted = response.mapItems.sorted { item1, item2 in
-                let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                return userLocation.distance(from: location1) < userLocation.distance(from: location2)
+                return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
             }
             
             await MainActor.run {
