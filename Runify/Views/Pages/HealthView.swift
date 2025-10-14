@@ -136,17 +136,18 @@ struct HealthView: View {
                             
                             // Buttons
                             VStack(spacing: 12) {
-                                // Features
-                                VStack(alignment: .leading, spacing: 10) {
-                                    FeatureRow(icon: "figure.run", text: "Sync your runs with the Health app")
-                                    FeatureRow(icon: "heart.fill", text: "Monitor your heart rate and health")
-                                    FeatureRow(icon: "flame.fill", text: "See calories burned and steps")
-                                    FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "View fitness trends")
-                                }
-                                .padding(.vertical, 10)
+
                                 
                                 if !healthKitManager.authorizationRequested {
                                     // First time - show Connect button
+                                    // Features
+                                    VStack(alignment: .leading, spacing: 10) {
+                                        FeatureRow(icon: "figure.run", text: "Sync your runs with the Health app")
+                                        FeatureRow(icon: "heart.fill", text: "Monitor your heart rate and health")
+                                        FeatureRow(icon: "flame.fill", text: "See calories burned and steps")
+                                        FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "View fitness trends")
+                                    }
+                                    .padding(.vertical, 10)
                                     Button(action: {
                                         healthKitManager.requestAuthorization { success, error in
                                             // After authorization, fetch data if successful
