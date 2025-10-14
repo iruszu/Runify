@@ -87,18 +87,14 @@ class SearchViewModel: ObservableObject {
                 
                 // Filter out locations over 1000km away
                 let filteredItems = response.mapItems.filter { item in
-                    let location = CLLocation(latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
-                    let distanceInKm = userCLLocation.distance(from: location) / 1000
+                    let distanceInKm = userCLLocation.distance(from: item.location) / 1000
                     return distanceInKm <= 1000
                 }
                 
                 // Sort by distance (closest first)
                 searchResults = filteredItems.sorted { item1, item2 in
-                    let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                    let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                    
-                    let distance1 = userCLLocation.distance(from: location1)
-                    let distance2 = userCLLocation.distance(from: location2)
+                    let distance1 = userCLLocation.distance(from: item1.location)
+                    let distance2 = userCLLocation.distance(from: item2.location)
                     
                     return distance1 < distance2
                 }
@@ -127,10 +123,12 @@ class SearchViewModel: ObservableObject {
     }
     
     func saveRecentSearch(_ mapItem: MKMapItem) {
+        let addressString = mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true) ?? ""
+        
         let search = RecentSearch(
             name: mapItem.name ?? "Unknown Location",
-            address: mapItem.placemark.title ?? "",
-            coordinate: mapItem.placemark.coordinate
+            address: addressString,
+            coordinate: mapItem.location.coordinate
         )
         
         // Remove duplicates (same name)
@@ -184,13 +182,10 @@ class SearchViewModel: ObservableObject {
                 
                 // Filter to 10-20km range and sort by distance
                 let filteredItems = response.mapItems.filter { item in
-                    let location = CLLocation(latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
-                    let distanceInKm = userCLLocation.distance(from: location) / 1000
+                    let distanceInKm = userCLLocation.distance(from: item.location) / 1000
                     return distanceInKm >= 10 && distanceInKm <= 20
                 }.sorted { item1, item2 in
-                    let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                    let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                    return userCLLocation.distance(from: location1) < userCLLocation.distance(from: location2)
+                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
                 }
                 
                 nearbyLocations = Array(filteredItems.prefix(5)) // Show top 5
@@ -245,9 +240,7 @@ class SearchViewModel: ObservableObject {
                 
                 // Sort by distance and take top results
                 let sortedItems = response.mapItems.sorted { item1, item2 in
-                    let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                    let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                    return userCLLocation.distance(from: location1) < userCLLocation.distance(from: location2)
+                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
                 }
                 
                 recommendedRoutes = Array(sortedItems.prefix(20))
@@ -308,13 +301,10 @@ class SearchViewModel: ObservableObject {
                 let maxDistance = routeDistance * 1.3
                 
                 let filteredItems = response.mapItems.filter { item in
-                    let location = CLLocation(latitude: item.placemark.coordinate.latitude, longitude: item.placemark.coordinate.longitude)
-                    let distanceInKm = userCLLocation.distance(from: location) / 1000
+                    let distanceInKm = userCLLocation.distance(from: item.location) / 1000
                     return distanceInKm >= minDistance && distanceInKm <= maxDistance
                 }.sorted { item1, item2 in
-                    let location1 = CLLocation(latitude: item1.placemark.coordinate.latitude, longitude: item1.placemark.coordinate.longitude)
-                    let location2 = CLLocation(latitude: item2.placemark.coordinate.latitude, longitude: item2.placemark.coordinate.longitude)
-                    return userCLLocation.distance(from: location1) < userCLLocation.distance(from: location2)
+                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
                 }
                 
                 distanceFilteredRoutes = filteredItems
