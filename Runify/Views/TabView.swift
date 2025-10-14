@@ -12,6 +12,7 @@ struct MainTabView: View {
     @SceneStorage("selectedTab") var selectedTab = 0 //keeps value alive as long as scene is active
     @StateObject private var coordinator = AppCoordinator()
     @StateObject private var runTracker = RunTracker()
+    @EnvironmentObject var healthKitManager: HealthKitManager
     @State private var showRunOptions = false
     @Environment(\.modelContext) private var modelContext
     
@@ -23,7 +24,8 @@ struct MainTabView: View {
                     .environmentObject(runTracker)
             }
             Tab("Health", systemImage: "chart.line.text.clipboard", value: 1) {
-                Text("Placeholder")
+                HealthView()
+                    .environmentObject(healthKitManager)
             }
             Tab("Profile", systemImage: "person.circle", value: 2) {
                 ProfileView()
@@ -135,6 +137,7 @@ struct MainTabView: View {
             .modelContainer(container)
             .environmentObject(AppCoordinator())
             .environmentObject(RunTracker())
+            .environmentObject(HealthKitManager())
     } else {
         // Fallback on earlier versions
         return MainTabView()

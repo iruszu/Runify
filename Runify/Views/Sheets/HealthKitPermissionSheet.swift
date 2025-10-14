@@ -14,48 +14,62 @@ struct HealthKitPermissionSheet: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            // Handle area
-            RoundedRectangle(cornerRadius: 2.5)
-                .fill(Color.secondary)
-                .frame(width: 36, height: 5)
-                .padding(.top, 8)
             
-            Spacer()
             
-            // Icon
-            Image(systemName: "heart.text.square.fill")
-                .font(.system(size: 80))
-                .foregroundColor(.red)
-                .padding(.bottom, 8)
+            HStack {
+                Image("Runify")
+                    .resizable()
+                    .frame(width: 80, height: 80)
+                    .padding()
+             
+                Image(systemName: "xmark")
+                
+                
+                // Icon
+                Image("AppleHealth")
+                    .resizable()
+                    .frame(width: 80, height: 80)
+                    .padding()
+                
+          
+            }
+            
             
             // Title
-            Text("Connect to Apple Health")
-                .font(.title)
-                .fontWeight(.bold)
+            HStack {
+                Text("Connect to")
+                    .font(.title)
+                    .fontWeight(.bold)
+                
+                Text("Apple Health")
+                    .font(.title)
+                    .fontWeight(.bold)
+                    .foregroundColor(.pink)
+            }
+            
             
             // Description
             Text("Track your runs and monitor your fitness progress")
-                .font(.subheadline)
+                .font(.callout)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+                .padding(.top, -10)
             
             // Features
-            VStack(alignment: .leading, spacing: 16) {
-                FeatureRow(icon: "figure.run", text: "Track your runs automatically")
-                FeatureRow(icon: "heart.fill", text: "Monitor your heart rate")
-                FeatureRow(icon: "flame.fill", text: "See calories burned")
+            VStack(alignment: .leading, spacing: 10) {
+                FeatureRow(icon: "figure.run", text: "Sync your runs with the Health app")
+                FeatureRow(icon: "heart.fill", text: "Monitor your heart rate and health")
+                FeatureRow(icon: "flame.fill", text: "See calories burned and steps")
                 FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "View fitness trends")
             }
-            .padding(.vertical, 24)
-            .padding(.horizontal, 32)
+            .padding(.vertical, 10)
             
             // Privacy note
-            Text("Your health data is private and secure. We only access data you explicitly allow.")
+            Text("Your health data is private and secure. We only access data you explicitly allow. Click \"Turn On All\" for detailed insights.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 32)
+      
             
             Spacer()
             
@@ -63,30 +77,39 @@ struct HealthKitPermissionSheet: View {
             VStack(spacing: 12) {
                 Button(action: {
                     healthKitManager.requestAuthorization { success, error in
-                        if success {
-                            onAuthorize()
-                        }
                         dismiss()
+                        
+                        // Wait for sheet to dismiss before calling onAuthorize
+                        if success {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                onAuthorize()
+                            }
+                        }
                     }
                 }) {
-                    Text("Connect to Health")
+                    Text("Connect")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.accentColor)
                         .foregroundColor(.white)
                         .cornerRadius(12)
+                        .glassEffect(.regular.tint(.accentColor).interactive())
                 }
                 
                 Button("Maybe Later") {
-                    onAuthorize() // Still allow them to start run
                     dismiss()
+                    
+                    // Wait for sheet to dismiss before calling onAuthorize
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                        onAuthorize()
+                    }
                 }
                 .foregroundColor(.secondary)
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 20)
         }
+        .padding(.top, 40)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.hidden)
     }
@@ -103,7 +126,7 @@ struct FeatureRow: View {
                 .frame(width: 30)
                 .font(.title3)
             Text(text)
-                .font(.body)
+                .font(.caption)
         }
     }
 }

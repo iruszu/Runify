@@ -39,7 +39,7 @@ struct HomeView: View {
             )))) {
                 // Empty map content - just showing the background
             }
-            .mapStyle(.standard(emphasis: .muted, pointsOfInterest: .excludingAll, showsTraffic: false))
+            .mapStyle(.hybrid(elevation: .realistic))
             .disabled(true) // Make it non-interactive
             .ignoresSafeArea()
             

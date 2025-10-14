@@ -143,8 +143,8 @@ struct MapSnapshotView: View {
                  LinearGradient(
                      gradient: Gradient(stops: [
                          .init(color: Color.clear, location: 0.0),
-                         .init(color: Color.clear, location: 0.1), // Adjust this to control spread
-                         .init(color: Color.black.opacity(1), location: 1.0)
+                         .init(color: Color.clear, location: 0.2), // Adjust this to control spread
+                         .init(color: Color.black.opacity(0.7), location: 0.6)
                      ]),
                      startPoint: .top,
                      endPoint: .bottom
@@ -155,7 +155,7 @@ struct MapSnapshotView: View {
         }
         .frame(height: 400) // Reduced height
         .clipShape(RoundedRectangle(cornerRadius: 16))
-        .opacity(0.6)
+        .opacity(0.9)
 
     }
     

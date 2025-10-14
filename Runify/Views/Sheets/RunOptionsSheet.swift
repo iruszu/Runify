@@ -39,7 +39,7 @@ struct RunOptionsSheet: View {
                     // Go option
                     Button(action: {
                         isGoSelected = true
-
+                        selectedLocation = nil // Clear selected location
                     }) {
                         HStack(spacing: 16) {
                             Image(systemName: "figure.run")
@@ -133,6 +133,7 @@ struct RunOptionsSheet: View {
                 proceedWithRun()
             }
             .environmentObject(healthKitManager)
+            .presentationDetents([.fraction(0.75)])
         }
         .onAppear {
             viewModel.setRunTracker(runTracker)
