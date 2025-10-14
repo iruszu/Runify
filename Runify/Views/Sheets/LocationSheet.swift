@@ -25,7 +25,7 @@ struct LocationSheet: View {
         
         // Initialize map position centered on the location
         let region = MKCoordinateRegion(
-            center: mapItem.placemark.coordinate,
+            center: mapItem.location.coordinate,
             latitudinalMeters: 1000,
             longitudinalMeters: 1000
         )
@@ -237,29 +237,15 @@ struct LocationSheet: View {
     // MARK: - Helper Functions
     
     private func formatAddress() -> String? {
-        let placemark = mapItem.placemark
-        var components: [String] = []
-        
-        if let thoroughfare = placemark.thoroughfare {
-            components.append(thoroughfare)
-        }
-        if let locality = placemark.locality {
-            components.append(locality)
-        }
-        if let administrativeArea = placemark.administrativeArea {
-            components.append(administrativeArea)
-        }
-        
-        return components.isEmpty ? nil : components.joined(separator: ", ")
+        return mapItem.addressRepresentations?.fullAddress(includingRegion: true, singleLine: true)
     }
     
     private func calculateDistance() -> Double? {
         guard let userLocation = runTracker.lastLocation else { return nil }
         
         let userCLLocation = CLLocation(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
-        let itemLocation = CLLocation(latitude: mapItem.placemark.coordinate.latitude, longitude: mapItem.placemark.coordinate.longitude)
         
-        let distanceInMeters = userCLLocation.distance(from: itemLocation)
+        let distanceInMeters = userCLLocation.distance(from: mapItem.location)
         return distanceInMeters / 1000 // Convert to km
     }
     
@@ -269,7 +255,7 @@ struct LocationSheet: View {
         isCalculatingRoute = true
         
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation.coordinate))
+        request.source = MKMapItem(location: userLocation, address: nil)
         request.destination = mapItem
         request.transportType = .walking
         
@@ -350,7 +336,7 @@ struct LocationSheet: View {
         // Set planned route in coordinator
         coordinator.setPlannedRoute(
             destinationName: mapItem.name ?? "Unknown Location",
-            coordinate: mapItem.placemark.coordinate,
+            coordinate: mapItem.location.coordinate,
             polyline: routeInfo.polyline
         )
         
@@ -371,7 +357,8 @@ struct RouteInfo {
 }
 
 #Preview {
-    let sampleMapItem = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194)))
+    let sampleLocation = CLLocation(latitude: 37.7749, longitude: -122.4194)
+    let sampleMapItem = MKMapItem(location: sampleLocation, address: nil)
     sampleMapItem.name = "San Francisco"
     
     return LocationSheet(mapItem: sampleMapItem, routeDistance: 5.0)

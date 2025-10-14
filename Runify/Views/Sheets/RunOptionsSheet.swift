@@ -173,7 +173,7 @@ struct RunOptionsSheet: View {
         }
         
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: userLocation.coordinate))
+        request.source = MKMapItem(location: userLocation, address: nil)
         request.destination = mapItem
         request.transportType = .walking
         
@@ -187,7 +187,7 @@ struct RunOptionsSheet: View {
                         // Set planned route in coordinator
                         coordinator.setPlannedRoute(
                             destinationName: mapItem.name ?? "Unknown Location",
-                            coordinate: mapItem.placemark.coordinate,
+                            coordinate: mapItem.location.coordinate,
                             polyline: route.polyline
                         )
                         
@@ -218,11 +218,7 @@ struct RouteCard: View {
     private var distance: String {
         guard let userLocation = userLocation else { return "-- km" }
         
-        let itemLocation = CLLocation(
-            latitude: mapItem.placemark.coordinate.latitude,
-            longitude: mapItem.placemark.coordinate.longitude
-        )
-        let distanceInKm = userLocation.distance(from: itemLocation) / 1000
+        let distanceInKm = userLocation.distance(from: mapItem.location) / 1000
         return String(format: "%.1f km", distanceInKm)
     }
     
