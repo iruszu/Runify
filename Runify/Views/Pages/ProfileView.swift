@@ -160,37 +160,7 @@ struct ProfileView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
-                // Profile Header
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Profile")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.horizontal, 20)
-                    
-                    HStack {
-                        Image(systemName: "person.circle.fill")
-                            .font(.system(size: 60))
-                            .foregroundColor(.orange)
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Kellie Ho")
-                                .font(.title2)
-                                .fontWeight(.semibold)
-                            
-                            Text("Running Enthusiast")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                            
-                            Text("Member since October 2025")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                }
-                
+
                 // Quick Stats Section
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -242,13 +212,26 @@ struct ProfileView: View {
                     Chart(chartData, id: \.label) { data in
                         BarMark(
                             x: .value("Period", data.label),
-                            y: .value("Distance", data.distance)
+                            y: .value("Distance (km)", data.distance)
                         )
                         .foregroundStyle(.orange.gradient)
                         .cornerRadius(4)
                     }
                     .frame(height: 200)
                     .padding(.horizontal, 20)
+                    .chartYAxis {
+                        AxisMarks { value in
+                            AxisGridLine()
+                                .foregroundStyle(.gray.opacity(0.3))
+                            AxisValueLabel {
+                                if let distanceValue = value.as(Double.self) {
+                                    Text("\(String(format: "%.1f", distanceValue)) km")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    }
                     .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
                 }
                 
@@ -291,51 +274,8 @@ struct ProfileView: View {
                     }
                     .padding(.horizontal, 20)
                 }
-                
-                // Achievements
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Achievements")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 20)
-                    
-                    if achievements.isEmpty {
-                        Text("Complete runs to earn achievements!")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .padding(.horizontal, 20)
-                    } else {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
-                                ForEach(achievements, id: \.title) { achievement in
-                                    AchievementBadge(
-                                        title: achievement.title, 
-                                        icon: achievement.icon, 
-                                        color: achievement.color,
-                                        description: achievement.description
-                                    )
-                                }
-                            }
-                            .padding(.horizontal, 20)
-                        }
-                    }
-                }
-                
-                // Settings Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Settings")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .padding(.horizontal, 20)
-                    
-                    VStack(spacing: 8) {
-                        SettingsRow(title: "Notifications", icon: "bell.fill", color: .blue)
-                        SettingsRow(title: "Units", icon: "ruler.fill", color: .green)
-                        SettingsRow(title: "Privacy", icon: "lock.fill", color: .red)
-                        SettingsRow(title: "About", icon: "info.circle.fill", color: .gray)
-                    }
-                    .padding(.horizontal, 20)
-                }
+
+
             }
             .padding(.bottom, 100) // Extra padding for tab bar
         }
@@ -355,21 +295,42 @@ struct StatCard: View {
             HStack {
                 Image(systemName: icon)
                     .foregroundColor(.orange)
+                    .font(.title3)
                 Spacer()
             }
             
-            Text(value)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(.primary)
-            
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                // Split value and unit for better formatting
+                let components = value.components(separatedBy: " ")
+                if components.count >= 2 {
+                    HStack(alignment: .bottom, spacing: 2) {
+                        Text(components[0])
+                            .font(.caption)
+                            .fontWeight(.bold)
+                            .foregroundColor(.primary)
+                        
+                        Text(components[1])
+                            .font(.caption2)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+                } else {
+                    Text(value)
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                }
+                
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
         .padding(16)
         .glassEffect(.regular.tint(.orange.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
         .frame(maxWidth: .infinity)
+        .frame(height: 100) // Fixed height for equal dimensions
     }
 }
 
