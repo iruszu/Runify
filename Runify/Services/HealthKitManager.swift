@@ -24,8 +24,11 @@ class HealthKitManager: ObservableObject {
         checkAuthorizationStatus()
         
         // Automatically fetch step data if already authorized
-        if isAuthorized {
-            fetchAllStepData()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            print("HealthKit: Initial authorization check complete. Authorized: \(self.isAuthorized)")
+            if self.isAuthorized {
+                self.fetchAllStepData()
+            }
         }
     }
     
@@ -54,38 +57,88 @@ class HealthKitManager: ObservableObject {
     
     func checkAuthorizationStatus() {
         guard HKHealthStore.isHealthDataAvailable() else {
-            isAuthorized = false
+            DispatchQueue.main.async {
+                self.isAuthorized = false
+                self.authorizationRequested = false
+            }
             return
         }
         
-        // For read permissions, HealthKit doesn't let us check authorization status reliably
-        // Instead, we try to fetch data - if it works, we're authorized
+        // Check write permissions first (these can be checked reliably)
+        let workoutStatus = healthStore.authorizationStatus(for: HKObjectType.workoutType())
+        
+        // If workout permission is not determined, we haven't requested authorization yet
+        if workoutStatus == .notDetermined {
+            DispatchQueue.main.async {
+                self.authorizationRequested = false
+                self.isAuthorized = false
+            }
+            return
+        }
+        
+        // Mark that we've requested authorization before
+        DispatchQueue.main.async {
+            self.authorizationRequested = true
+        }
+        
+        // For read permissions, use a different approach - try to query any data at all
         let stepType = HKQuantityType(.stepCount)
         
-        let now = Date()
-        let startOfDay = Calendar.current.startOfDay(for: now)
-        let predicate = HKQuery.predicateForSamples(withStart: startOfDay, end: now, options: .strictStartDate)
+        // Create a broader date range to increase chances of finding some data
+        let calendar = Calendar.current
+        let endDate = Date()
+        let startDate = calendar.date(byAdding: .day, value: -30, to: endDate) ?? endDate
         
-        let query = HKStatisticsQuery(
-            quantityType: stepType,
-            quantitySamplePredicate: predicate,
-            options: .cumulativeSum
-        ) { [weak self] _, result, error in
-            Task { @MainActor in
-                // If we can read data, we're authorized
-                if error == nil && result != nil {
-                    self?.isAuthorized = true
-                    self?.authorizationRequested = true
+        let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictEndDate)
+        
+        let query = HKSampleQuery(
+            sampleType: stepType,
+            predicate: predicate,
+            limit: 1,
+            sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
+        ) { [weak self] _, samples, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    let nsError = error as NSError
+                    
+                    // Check for authorization-related errors
+                    if nsError.domain == "com.apple.healthkit" && nsError.code == 5 {
+                        // HKErrorAuthorizationDenied
+                        print("HealthKit: Authorization denied")
+                        self?.isAuthorized = false
+                    } else if nsError.domain == "com.apple.healthkit" && nsError.code == 6 {
+                        // HKErrorAuthorizationNotDetermined  
+                        print("HealthKit: Authorization not determined")
+                        self?.isAuthorized = false
+                    } else {
+                        // For other errors (including "no data"), assume we have permission
+                        print("HealthKit: Query completed (may have no data, but authorized)")
+                        self?.isAuthorized = true
+                    }
                 } else {
-                    // Check workout permission (write permission can be checked)
-                    let workoutStatus = self?.healthStore.authorizationStatus(for: HKObjectType.workoutType())
-                    self?.authorizationRequested = (workoutStatus != .notDetermined)
-                    self?.isAuthorized = false
+                    // Query succeeded (with or without data), we have permission
+                    print("HealthKit: Query succeeded, authorized")
+                    self?.isAuthorized = true
                 }
             }
         }
-
+        
         healthStore.execute(query)
+    }
+    
+    /// Force refresh authorization status - useful when returning from Settings
+    func refreshAuthorizationStatus() {
+        print("HealthKit: Refreshing authorization status...")
+        checkAuthorizationStatus()
+        
+        // Also try to fetch data to verify permissions
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+            print("HealthKit: Current authorization status: \(self?.isAuthorized ?? false)")
+            if self?.isAuthorized == true {
+                print("HealthKit: Fetching step data...")
+                self?.fetchAllStepData()
+            }
+        }
     }
     
     func requestAuthorization(completion: @escaping (Bool, Error?) -> Void) {
@@ -137,7 +190,13 @@ class HealthKitManager: ObservableObject {
             options: .cumulativeSum
         ) { [weak self] _, result, error in
             guard let result = result, let sum = result.sumQuantity() else {
-                print("Failed to read step count: \(error?.localizedDescription ?? "UNKNOWN ERROR")")
+                // Don't treat "no data available" as an error - just set steps to 0
+                if let error = error {
+                    print("Step count query (today): \(error.localizedDescription)")
+                }
+                Task { @MainActor in
+                    self?.stepCountToday = 0
+                }
                 return
             }
 
@@ -188,7 +247,11 @@ class HealthKitManager: ObservableObject {
         query.initialResultsHandler = { [weak self] _, result, error in
             guard let result = result else {
                 if let error = error {
-                    print("An error occurred while retrieving step count: \(error.localizedDescription)")
+                    print("Weekly step count query: \(error.localizedDescription)")
+                }
+                // Set all days to 0 if no data available
+                Task { @MainActor in
+                    self?.thisWeekSteps = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
                 }
                 return
             }

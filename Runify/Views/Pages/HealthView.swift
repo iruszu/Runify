@@ -208,6 +208,22 @@ struct HealthView: View {
                                         }
                                         .padding(30)
                                         
+                                        // Manual refresh button
+                                        Button(action: {
+                                            healthKitManager.refreshAuthorizationStatus()
+                                        }) {
+                                            HStack {
+                                                Image(systemName: "arrow.clockwise")
+                                                Text("Check Again")
+                                                    .fontWeight(.medium)
+                                            }
+                                            .frame(maxWidth: .infinity)
+                                            .padding()
+                                            .foregroundColor(.accentColor)
+                                            .background(Color(.systemGray6))
+                                            .cornerRadius(12)
+                                        }
+                                        
                                         
                                         
                                     }
@@ -237,6 +253,10 @@ struct HealthView: View {
                 if healthKitManager.isAuthorized {
                     healthKitManager.fetchAllStepData()
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                // Refresh authorization when app becomes active (user might have changed permissions in Settings)
+                healthKitManager.refreshAuthorizationStatus()
             }
         }
     }

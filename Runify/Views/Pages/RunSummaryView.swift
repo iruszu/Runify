@@ -48,19 +48,19 @@ struct RunSummaryView: View {
                     
                     if !runTracker.locations.isEmpty {
                         Map {
-                            // Show planned route (if exists) - semi-transparent blue
+                            // Show planned route (if exists) - semi-transparent blue with smooth rendering
                             if !runTracker.plannedRouteCoordinates.isEmpty {
                                 let polyline = MKPolyline(coordinates: runTracker.plannedRouteCoordinates, count: runTracker.plannedRouteCoordinates.count)
                                 MapPolyline(polyline)
-                                    .stroke(.blue.opacity(0.5), lineWidth: 4)
+                                    .stroke(.blue.opacity(0.5), style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                             }
                             
-                            // Show actual route - solid orange
+                            // Show actual route - solid orange with smooth rendering
                             if runTracker.locations.count > 1 {
                                 let coordinates = runTracker.locations.map { $0.coordinate }
                                 let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                                 MapPolyline(polyline)
-                                    .stroke(.orange, lineWidth: 4)
+                                    .stroke(.orange, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                             }
                             
                             // Show destination marker (if exists)

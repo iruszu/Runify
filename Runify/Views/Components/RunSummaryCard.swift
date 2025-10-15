@@ -95,12 +95,16 @@ struct MapSnapshotView: View {
                             .stroke(.blue.opacity(0.5), lineWidth: 4)
                     }
                     
-                    // Show actual route - solid orange
+                    // Show actual route - solid orange with smooth rendering
                     if !run.locations.isEmpty && run.locations.count > 1 {
-                        let coordinates = run.locations.map { $0.clCoordinate }
+                        // Convert saved Coordinate objects to CLLocation objects to match RunSummaryView approach
+                        let clLocations = run.locations.map { coordinate in
+                            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+                        }
+                        let coordinates = clLocations.map { $0.coordinate }
                         let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                         MapPolyline(polyline)
-                            .stroke(.orange, lineWidth: 4)
+                            .stroke(.orange, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                     }
                     
                     // Show destination marker (if exists)
@@ -120,12 +124,6 @@ struct MapSnapshotView: View {
                     // Start marker
                     Marker("Start", coordinate: startLocation.clCoordinate)
                         .tint(.green)
-                    
-                    // End marker (last location)
-                    if let lastLocation = run.locations.last {
-                        Marker("Finish", coordinate: lastLocation.clCoordinate)
-                            .tint(.red)
-                    }
                 }
                 .interactiveDismissDisabled(true)
                 .mapStyle(mapStyle)

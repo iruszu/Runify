@@ -87,14 +87,15 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
                 // delegate is an object that handles events on behalf of another object, so it sends its location to this class (RunTracker)
                 locationManager?.delegate = self
                 
-                // Configure location accuracy for running
+                // Configure location accuracy and activity type for running
+                // Using kCLLocationAccuracyBest for precise running tracking
                 locationManager?.desiredAccuracy = kCLLocationAccuracyBest
-                locationManager?.distanceFilter = 5 // Update every 5 meters for smooth tracking
+                locationManager?.distanceFilter = 10 // Update every 10 meters (Apple's recommendation)
+                locationManager?.activityType = .fitness // Optimized for running/fitness activities
                 
-                // Request appropriate authorization first
-                // For running apps, you might want to request Always authorization
-                // to enable background tracking during runs
-                locationManager?.requestAlwaysAuthorization()
+                // Request When In Use authorization (better privacy than Always)
+                // Combined with allowsBackgroundLocationUpdates for background tracking during runs
+                locationManager?.requestWhenInUseAuthorization()
                 locationManager?.startUpdatingLocation() // Start updating location
             }
         }
@@ -105,22 +106,25 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     /// Enable background location updates - call this when starting a run
+    /// Following Apple's recommended approach: When In Use + background updates
     private func enableBackgroundLocationIfNeeded() {
         guard let locationManager = locationManager else { return }
         
-        // Only enable background updates if we have appropriate authorization
-        if locationManager.authorizationStatus == .authorizedAlways {
+        // Enable background updates for When In Use authorization
+        // This shows the location indicator when app is in background (better transparency)
+        if locationManager.authorizationStatus == .authorizedWhenInUse || 
+           locationManager.authorizationStatus == .authorizedAlways {
             locationManager.allowsBackgroundLocationUpdates = true
-        } else if locationManager.authorizationStatus == .authorizedWhenInUse {
-            // For "When In Use" authorization, we can't use background updates
-            // The app will continue tracking while in foreground
-            print("Background location updates require 'Always' authorization")
+            print("✅ Background location updates enabled")
+        } else {
+            print("⚠️ Location authorization required for background updates")
         }
     }
     
     /// Disable background location updates - call this when stopping/pausing a run
     private func disableBackgroundLocation() {
         locationManager?.allowsBackgroundLocationUpdates = false
+        print("🔴 Background location updates disabled")
     }
     
     
@@ -174,6 +178,12 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     }
     
     func stopRun() {
+        // Capture the current location as the final position before stopping updates
+        if let currentLocation = locationManager?.location {
+            locations.append(currentLocation)
+            lastLocation = currentLocation
+        }
+        
         locationManager?.stopUpdatingLocation() // Stop updating location when the run stops
         disableBackgroundLocation() // Disable background location updates
         timerManager.stopTimer()
@@ -266,11 +276,22 @@ extension RunTracker {
     
     // grabs the users' most recent location
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let location = locations.last else { return }
-        
+        // Always process all provided locations (Apple's recommendation)
+        for location in locations {
+            processLocationUpdate(location)
+        }
+    }
+    
+    /// Process and validate a single location update
+    /// Following Apple's best practices for location validation
+    private func processLocationUpdate(_ location: CLLocation) {
         Task {
-            //update region to the user's current location
             await MainActor.run {
+                // Validate location before using it
+                guard isLocationValid(location) else {
+                    print("⚠️ Location rejected: \(location.coordinate)")
+                    return
+                }
                 
                 // Always update the region to follow user's location
                 region = .region(
@@ -297,7 +318,36 @@ extension RunTracker {
                 lastLocation = location // updates the last location so we can track the distance
             }
         }
+    }
+    
+    /// Validate location data following Apple's recommendations
+    /// Returns true if the location should be used for tracking
+    private func isLocationValid(_ newLocation: CLLocation) -> Bool {
+        // 1. Check timestamp - ensure location is recent (within last 60 seconds)
+        // This filters out cached values from when location services start up
+        let locationAge = Date().timeIntervalSince(newLocation.timestamp)
+        guard locationAge < 60 else {
+            print("Location too old: \(locationAge)s")
+            return false
         }
+        
+        // 2. Keep first few locations to establish initial position
+        guard locations.count > 10 else { return true }
+        
+        // 3. Check minimum distance between points
+        // Using 5 meters for smoother route visualization (balance between accuracy and smoothness)
+        // Apple recommends 10m for battery optimization, but 5m gives smoother lines
+        guard let lastLocation = locations.last else { return true }
+        let minimumDistanceInMeters = 5.0
+        let metersApart = newLocation.distance(from: lastLocation)
+        
+        if metersApart < minimumDistanceInMeters {
+            print("Location too close: \(metersApart)m")
+            return false
+        }
+        
+        return true
+    }
     
     // MARK: - Planned Route Methods
     
