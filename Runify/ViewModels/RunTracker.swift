@@ -86,7 +86,15 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
                 locationManager = CLLocationManager()
                 // delegate is an object that handles events on behalf of another object, so it sends its location to this class (RunTracker)
                 locationManager?.delegate = self
-                locationManager?.requestWhenInUseAuthorization()
+                
+                // Configure location accuracy for running
+                locationManager?.desiredAccuracy = kCLLocationAccuracyBest
+                locationManager?.distanceFilter = 5 // Update every 5 meters for smooth tracking
+                
+                // Request appropriate authorization first
+                // For running apps, you might want to request Always authorization
+                // to enable background tracking during runs
+                locationManager?.requestAlwaysAuthorization()
                 locationManager?.startUpdatingLocation() // Start updating location
             }
         }
@@ -94,6 +102,25 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func setModelContext(_ context: ModelContext) {
         self.modelContext = context
+    }
+    
+    /// Enable background location updates - call this when starting a run
+    private func enableBackgroundLocationIfNeeded() {
+        guard let locationManager = locationManager else { return }
+        
+        // Only enable background updates if we have appropriate authorization
+        if locationManager.authorizationStatus == .authorizedAlways {
+            locationManager.allowsBackgroundLocationUpdates = true
+        } else if locationManager.authorizationStatus == .authorizedWhenInUse {
+            // For "When In Use" authorization, we can't use background updates
+            // The app will continue tracking while in foreground
+            print("Background location updates require 'Always' authorization")
+        }
+    }
+    
+    /// Disable background location updates - call this when stopping/pausing a run
+    private func disableBackgroundLocation() {
+        locationManager?.allowsBackgroundLocationUpdates = false
     }
     
     
@@ -108,6 +135,9 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         distance = 0.0 // Reset distance
         pace = 0.0 // Reset pace
         elapsedTime = 0.0 // Reset elapsed time
+        
+        // Enable background location if possible
+        enableBackgroundLocationIfNeeded()
         
         // Start timer using TimerManager
         timerManager.startTimer(interval: 1.0, repeats: true) { [weak self] in
@@ -145,6 +175,7 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
     
     func stopRun() {
         locationManager?.stopUpdatingLocation() // Stop updating location when the run stops
+        disableBackgroundLocation() // Disable background location updates
         timerManager.stopTimer()
         isRunning = false
         

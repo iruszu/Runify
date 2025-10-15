@@ -15,6 +15,7 @@ struct ProfileView: View {
     
     // MARK: - State
     @State private var selectedTimePeriod: TimePeriod = .week
+    @State private var selectedPaceTimePeriod: PaceTimePeriod = .week
     
     // MARK: - Computed Properties
     
@@ -73,14 +74,17 @@ struct ProfileView: View {
         
         switch selectedTimePeriod {
         case .day:
-            // Show hourly data for the day
+            // Show 4-hour interval data for the day
             return (0..<24).compactMap { hour in
                 guard let date = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: now) else { return nil }
                 let hourRuns = filteredRuns.filter { calendar.component(.hour, from: $0.date) == hour }
                 let distance = hourRuns.reduce(0) { $0 + $1.distanceInKilometers }
                 
+                // Only show labels every 4 hours for better readability
+                let label = hour % 4 == 0 ? String(format: "%02d:00", hour) : ""
+                
                 return ChartData(
-                    label: String(format: "%02d:00", hour),
+                    label: label,
                     distance: distance,
                     date: date
                 )
@@ -176,8 +180,14 @@ struct ProfileView: View {
         
         switch timePeriod {
         case .day:
-            formatter.dateFormat = "HH:mm"
-            return formatter.string(from: date)
+            let hour = calendar.component(.hour, from: date)
+            // Only show labels every 4 hours for better readability
+            if hour % 4 == 0 {
+                formatter.dateFormat = "HH:mm"
+                return formatter.string(from: date)
+            } else {
+                return "" // Hide labels for other hours
+            }
         case .week:
             formatter.dateFormat = "E"
             return formatter.string(from: date)
@@ -196,8 +206,31 @@ struct ProfileView: View {
         
         switch timePeriod {
         case .day:
-            formatter.dateFormat = "HH:mm"
+            let hour = calendar.component(.hour, from: date)
+            // Only show labels every 4 hours for better readability
+            if hour % 4 == 0 {
+                formatter.dateFormat = "HH:mm"
+                return formatter.string(from: date)
+            } else {
+                return "" // Hide labels for other hours
+            }
+        case .week:
+            formatter.dateFormat = "E"
             return formatter.string(from: date)
+        case .month:
+            let weekOfMonth = calendar.component(.weekOfMonth, from: date)
+            return "W\(weekOfMonth)"
+        case .year:
+            formatter.dateFormat = "MMM"
+            return formatter.string(from: date)
+        }
+    }
+    
+    private func formatPacePeriodLabel(for date: Date, timePeriod: PaceTimePeriod, offset: Int) -> String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        
+        switch timePeriod {
         case .week:
             formatter.dateFormat = "E"
             return formatter.string(from: date)
@@ -247,35 +280,63 @@ struct ProfileView: View {
         let calendar = Calendar.current
         let now = Date()
         
-        // Filter runs based on selected time period
-        let filteredRuns: [Run]
-        switch selectedTimePeriod {
-        case .day:
-            filteredRuns = runs.filter { calendar.isDate($0.date, inSameDayAs: now) }
+        // Determine the range based on selected pace time period
+        let startDate: Date
+        let endDate: Date
+        let periodCount: Int
+        
+        switch selectedPaceTimePeriod {
         case .week:
-            let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
-            let endOfWeek = calendar.date(byAdding: .day, value: 6, to: startOfWeek) ?? now
-            filteredRuns = runs.filter { $0.date >= startOfWeek && $0.date <= endOfWeek }
+            let weekStart = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+            let weekEnd = calendar.date(byAdding: .day, value: 7, to: weekStart) ?? now
+            startDate = weekStart
+            endDate = weekEnd
+            periodCount = 7 // Show daily data
         case .month:
-            let startOfMonth = calendar.dateInterval(of: .month, for: now)?.start ?? now
-            let endOfMonth = calendar.date(byAdding: .month, value: 1, to: startOfMonth) ?? now
-            filteredRuns = runs.filter { $0.date >= startOfMonth && $0.date < endOfMonth }
+            let monthStart = calendar.dateInterval(of: .month, for: now)?.start ?? now
+            let monthEnd = calendar.date(byAdding: .month, value: 1, to: monthStart) ?? now
+            startDate = monthStart
+            endDate = monthEnd
+            periodCount = 4 // Show weekly data
         case .year:
-            let startOfYear = calendar.dateInterval(of: .year, for: now)?.start ?? now
-            let endOfYear = calendar.date(byAdding: .year, value: 1, to: startOfYear) ?? now
-            filteredRuns = runs.filter { $0.date >= startOfYear && $0.date < endOfYear }
+            let yearStart = calendar.dateInterval(of: .year, for: now)?.start ?? now
+            let yearEnd = calendar.date(byAdding: .year, value: 1, to: yearStart) ?? now
+            startDate = yearStart
+            endDate = yearEnd
+            periodCount = 12 // Show monthly data
         }
         
-        return filteredRuns
-            .sorted { $0.date < $1.date }
-            .map { run in
-                let dayName = formatDayLabel(for: run.date, timePeriod: selectedTimePeriod)
-                return PaceData(
-                    day: dayName,
-                    pace: run.pace,
-                    date: run.date
-                )
+        return (0..<periodCount).compactMap { periodOffset in
+            let periodStart: Date
+            let periodEnd: Date
+            
+            switch selectedPaceTimePeriod {
+            case .week:
+                periodStart = calendar.date(byAdding: .day, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .day, value: 1, to: periodStart) ?? periodStart
+            case .month:
+                periodStart = calendar.date(byAdding: .weekOfYear, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: periodStart) ?? periodStart
+            case .year:
+                periodStart = calendar.date(byAdding: .month, value: periodOffset, to: startDate) ?? startDate
+                periodEnd = calendar.date(byAdding: .month, value: 1, to: periodStart) ?? periodStart
             }
+            
+            // Find runs in this period
+            let periodRuns = runs.filter { run in
+                run.date >= periodStart && run.date < periodEnd
+            }
+            
+            // Calculate average pace for this period (or 0 if no runs)
+            let averagePace = periodRuns.isEmpty ? 0.0 : periodRuns.reduce(0) { $0 + $1.pace } / Double(periodRuns.count)
+            
+            let periodLabel = formatPacePeriodLabel(for: periodStart, timePeriod: selectedPaceTimePeriod, offset: periodOffset)
+            return PaceData(
+                day: periodLabel,
+                pace: averagePace,
+                date: periodStart
+            )
+        }
     }
     
     private var weeklyFrequencyData: [FrequencyData] {
@@ -445,47 +506,6 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
                 }
                 
-                // Pace Trend Chart
-                if !paceTrendData.isEmpty {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("Pace Trend (\(selectedTimePeriod.displayName))")
-                            .font(.headline)
-                            .fontWeight(.semibold)
-                            .padding(.horizontal, 20)
-                        
-                        Chart(paceTrendData, id: \.day) { data in
-                            LineMark(
-                                x: .value("Run", data.day),
-                                y: .value("Pace (min/km)", data.pace)
-                            )
-                            .foregroundStyle(.blue.gradient)
-                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
-                            
-                            AreaMark(
-                                x: .value("Run", data.day),
-                                y: .value("Pace (min/km)", data.pace)
-                            )
-                            .foregroundStyle(.blue.opacity(0.1))
-                        }
-                        .frame(height: 200)
-                        .padding(.horizontal, 20)
-                        .chartYAxis {
-                            AxisMarks { value in
-                                AxisGridLine()
-                                    .foregroundStyle(.gray.opacity(0.3))
-                                AxisValueLabel {
-                                    if let paceValue = value.as(Double.self) {
-                                        Text("\(String(format: "%.1f", paceValue))")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
-                }
-                
                 // Running Frequency Chart
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Running Frequency (\(selectedTimePeriod.displayName))")
@@ -517,6 +537,59 @@ struct ProfileView: View {
                         }
                     }
                     .animation(.easeInOut(duration: 0.5), value: selectedTimePeriod)
+                }
+                
+                // Pace Trend Chart
+                if !paceTrendData.isEmpty {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Pace Trend (\(selectedPaceTimePeriod.displayName))")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                            
+                            Spacer()
+                            
+                            Picker("Pace Time Period", selection: $selectedPaceTimePeriod) {
+                                ForEach(PaceTimePeriod.allCases, id: \.self) { period in
+                                    Text(period.shortName).tag(period)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .frame(width: 120)
+                        }
+                        .padding(.horizontal, 20)
+                        
+                        Chart(paceTrendData, id: \.day) { data in
+                            LineMark(
+                                x: .value("Run", data.day),
+                                y: .value("Pace (min/km)", data.pace)
+                            )
+                            .foregroundStyle(.blue.gradient)
+                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round))
+                            
+                            AreaMark(
+                                x: .value("Run", data.day),
+                                y: .value("Pace (min/km)", data.pace)
+                            )
+                            .foregroundStyle(.blue.opacity(0.1))
+                        }
+                        .frame(height: 200)
+                        .padding(.horizontal, 20)
+                        .chartYAxis {
+                            AxisMarks { value in
+                                AxisGridLine()
+                                    .foregroundStyle(.gray.opacity(0.3))
+                                AxisValueLabel {
+                                    if let paceValue = value.as(Double.self) {
+                                        Text("\(String(format: "%.1f", paceValue))")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    .animation(.easeInOut(duration: 0.5), value: selectedPaceTimePeriod)
                 }
                 
                 // Personal Records
@@ -711,6 +784,26 @@ struct SettingsRow: View {
 }
 
 // MARK: - Data Models
+
+enum PaceTimePeriod: CaseIterable {
+    case week, month, year
+    
+    var shortName: String {
+        switch self {
+        case .week: return "W"
+        case .month: return "M"
+        case .year: return "Y"
+        }
+    }
+    
+    var displayName: String {
+        switch self {
+        case .week: return "This Week"
+        case .month: return "This Month"
+        case .year: return "This Year"
+        }
+    }
+}
 
 enum TimePeriod: CaseIterable {
     case day, week, month, year
