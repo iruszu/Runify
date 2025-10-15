@@ -299,6 +299,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -341,6 +342,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
