@@ -18,6 +18,13 @@ class HealthKitManager: ObservableObject {
     @Published var stepCountToday: Int = 0
     @Published var thisWeekSteps: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
     
+    // Calorie data
+    @Published var caloriesToday: Int = 0
+    @Published var thisWeekCalories: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
+    
+    // Activity rings data
+    @Published var activitySummary: HKActivitySummary?
+    
     // MARK: - Initialization
     
     init() {
@@ -28,6 +35,8 @@ class HealthKitManager: ObservableObject {
             print("HealthKit: Initial authorization check complete. Authorized: \(self.isAuthorized)")
             if self.isAuthorized {
                 self.fetchAllStepData()
+                self.fetchAllCalorieData()
+                self.fetchTodayActivitySummary()
             }
         }
     }
@@ -40,7 +49,8 @@ class HealthKitManager: ObservableObject {
             HKQuantityType(.heartRate),
             HKQuantityType(.activeEnergyBurned),
             HKQuantityType(.distanceWalkingRunning),
-            HKQuantityType(.stepCount)
+            HKQuantityType(.stepCount),
+            HKObjectType.activitySummaryType()
         ]
     }
     
@@ -137,6 +147,8 @@ class HealthKitManager: ObservableObject {
             if self?.isAuthorized == true {
                 print("HealthKit: Fetching step data...")
                 self?.fetchAllStepData()
+                self?.fetchAllCalorieData()
+                self?.fetchTodayActivitySummary()
             }
         }
     }
@@ -159,6 +171,8 @@ class HealthKitManager: ObservableObject {
                 // Automatically fetch step data after authorization
                 if success {
                     self?.fetchAllStepData()
+                    self?.fetchAllCalorieData()
+                    self?.fetchTodayActivitySummary()
                 }
                 
                 completion(success, error)
@@ -274,5 +288,143 @@ class HealthKitManager: ObservableObject {
     func fetchAllStepData() {
         readStepCountToday()
         readStepCountThisWeek()
+    }
+    
+    /// Fetch all calorie data (today + this week)
+    func fetchAllCalorieData() {
+        fetchTodayCalories()
+        readCaloriesThisWeek()
+    }
+    
+    /// Read today's calories burned
+    func fetchTodayCalories() {
+        guard let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            return
+        }
+        
+        let now = Date()
+        let startDate = Calendar.current.startOfDay(for: now)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: now,
+            options: .strictStartDate
+        )
+        
+        let query = HKStatisticsQuery(
+            quantityType: calorieType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum
+        ) { [weak self] _, result, error in
+            guard let result = result, let sum = result.sumQuantity() else {
+                if let error = error {
+                    print("Calorie query (today): \(error.localizedDescription)")
+                }
+                Task { @MainActor in
+                    self?.caloriesToday = 0
+                }
+                return
+            }
+
+            let calories = Int(sum.doubleValue(for: HKUnit.kilocalorie()))
+            Task { @MainActor in
+                self?.caloriesToday = calories
+            }
+        }
+
+        healthStore.execute(query)
+    }
+    
+    /// Read this week's calories burned (Sunday to Saturday)
+    func readCaloriesThisWeek() {
+        guard let calorieType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) else {
+            return
+        }
+        
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        // Find the start date (Sunday) of the current week
+        guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: today)) else {
+            print("Failed to calculate the start date of the week.")
+            return
+        }
+        
+        // Find the end date (Saturday) of the current week
+        guard let endOfWeek = calendar.date(byAdding: .day, value: 6, to: startOfWeek) else {
+            print("Failed to calculate the end date of the week.")
+            return
+        }
+        
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startOfWeek,
+            end: endOfWeek,
+            options: .strictStartDate
+        )
+        
+        let query = HKStatisticsCollectionQuery(
+            quantityType: calorieType,
+            quantitySamplePredicate: predicate,
+            options: .cumulativeSum,
+            anchorDate: startOfWeek,
+            intervalComponents: DateComponents(day: 1)
+        )
+        
+        query.initialResultsHandler = { [weak self] _, result, error in
+            guard let result = result else {
+                if let error = error {
+                    print("Weekly calorie query: \(error.localizedDescription)")
+                }
+                // Set all days to 0 if no data available
+                Task { @MainActor in
+                    self?.thisWeekCalories = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
+                }
+                return
+            }
+
+            result.enumerateStatistics(from: startOfWeek, to: endOfWeek) { statistics, _ in
+                if let quantity = statistics.sumQuantity() {
+                    let calories = Int(quantity.doubleValue(for: HKUnit.kilocalorie()))
+                    let day = calendar.component(.weekday, from: statistics.startDate)
+                    Task { @MainActor in
+                        self?.thisWeekCalories[day] = calories
+                    }
+                }
+            }
+        }
+
+        healthStore.execute(query)
+    }
+    
+    // MARK: - Activity Summary
+    
+    /// Fetch today's activity summary for activity rings
+    func fetchTodayActivitySummary() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        
+        let predicate = HKQuery.predicateForActivitySummary(with: DateComponents(
+            calendar: calendar,
+            year: calendar.component(.year, from: today),
+            month: calendar.component(.month, from: today),
+            day: calendar.component(.day, from: today)
+        ))
+        
+        let query = HKActivitySummaryQuery(predicate: predicate) { [weak self] _, summaries, error in
+            guard let summaries = summaries, let todaysSummary = summaries.first else {
+                if let error = error {
+                    print("Activity summary query: \(error.localizedDescription)")
+                }
+                Task { @MainActor in
+                    self?.activitySummary = nil
+                }
+                return
+            }
+            
+            Task { @MainActor in
+                self?.activitySummary = todaysSummary
+            }
+        }
+        
+        healthStore.execute(query)
     }
 }

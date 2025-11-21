@@ -43,13 +43,13 @@ struct HomeView: View {
             .disabled(true) // Make it non-interactive
             .ignoresSafeArea()
             
-            // Black gradient overlay
+            // Subtle gradient overlay for content readability
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color.black.opacity(0.7),
-                    Color.black.opacity(0.5),
-                    Color.black.opacity(0.3),
-                    Color.black.opacity(0.1)
+                    Color.black.opacity(0.2),
+                    Color.black.opacity(0.15),
+                    Color.black.opacity(0.1),
+                    Color.black.opacity(0.05)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom

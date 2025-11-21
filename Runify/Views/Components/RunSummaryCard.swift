@@ -153,6 +153,7 @@ struct MapSnapshotView: View {
             }
         }
         .frame(width: 300, height: 400) // Reduced height
+        .cornerRadius(16)
 
 
 

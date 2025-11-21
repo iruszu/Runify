@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+import HealthKitUI
+import HealthKit
 
 struct HealthView: View {
     @EnvironmentObject var healthKitManager: HealthKitManager
@@ -17,6 +19,67 @@ struct HealthView: View {
                     if healthKitManager.isAuthorized {
                         // Show health data
                         VStack(spacing: 20) {
+                            // Activity Rings Card
+                            if let activitySummary = healthKitManager.activitySummary {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Image(systemName: "circle.fill")
+                                            .font(.title2)
+                                            .foregroundColor(.pink)
+                                        Text("Activity Rings")
+                                            .font(.headline)
+                                        Spacer()
+                                        Button(action: {
+                                            healthKitManager.fetchTodayActivitySummary()
+                                        }) {
+                                            Image(systemName: "arrow.clockwise")
+                                                .foregroundColor(.accentColor)
+                                        }
+                                    }
+                                    
+                                    HStack {
+                                        // Activity Ring View
+                                        ActivityRingView(activitySummary: activitySummary)
+                                            .frame(width: 120, height: 120)
+                                        
+                                        Spacer()
+                                        
+                                        // Activity Details
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            ActivityDetail(
+                                                color: .pink,
+                                                icon: "flame.fill",
+                                                title: "Move",
+                                                current: Int(activitySummary.activeEnergyBurned.doubleValue(for: .kilocalorie())),
+                                                goal: Int(activitySummary.activeEnergyBurnedGoal.doubleValue(for: .kilocalorie())),
+                                                unit: "cal"
+                                            )
+                                            
+                                            ActivityDetail(
+                                                color: .green,
+                                                icon: "figure.run",
+                                                title: "Exercise",
+                                                current: Int(activitySummary.appleExerciseTime.doubleValue(for: .minute())),
+                                                goal: Int(activitySummary.appleExerciseTimeGoal.doubleValue(for: .minute())),
+                                                unit: "min"
+                                            )
+                                            
+                                            ActivityDetail(
+                                                color: .cyan,
+                                                icon: "figure.stand",
+                                                title: "Stand",
+                                                current: Int(activitySummary.appleStandHours.doubleValue(for: .count())),
+                                                goal: Int(activitySummary.appleStandHoursGoal.doubleValue(for: .count())),
+                                                unit: "hrs"
+                                            )
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color(.systemGray6))
+                                .cornerRadius(16)
+                            }
                             // Today's Steps Card
                             VStack(alignment: .leading, spacing: 12) {
                                 HStack {
@@ -39,6 +102,36 @@ struct HealthView: View {
                                     .foregroundColor(.primary)
                                 
                                 Text("steps")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.systemGray6))
+                            .cornerRadius(16)
+                            
+                            // Today's Calories Card
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    Image(systemName: "flame.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.orange)
+                                    Text("Calories Burned Today")
+                                        .font(.headline)
+                                    Spacer()
+                                    Button(action: {
+                                        healthKitManager.fetchTodayCalories()
+                                    }) {
+                                        Image(systemName: "arrow.clockwise")
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                
+                                Text("\(healthKitManager.caloriesToday)")
+                                    .font(.system(size: 48, weight: .bold))
+                                    .foregroundColor(.primary)
+                                
+                                Text("calories")
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
@@ -142,10 +235,10 @@ struct HealthView: View {
                                     // First time - show Connect button
                                     // Features
                                     VStack(alignment: .leading, spacing: 10) {
-                                        FeatureRow(icon: "figure.run", text: "Sync your runs with the Health app")
-                                        FeatureRow(icon: "heart.fill", text: "Monitor your heart rate and health")
-                                        FeatureRow(icon: "flame.fill", text: "See calories burned and steps")
-                                        FeatureRow(icon: "chart.line.uptrend.xyaxis", text: "View fitness trends")
+                                        HealthFeatureRow(icon: "figure.run", text: "Sync your runs with the Health app")
+                                        HealthFeatureRow(icon: "heart.fill", text: "Monitor your heart rate and health")
+                                        HealthFeatureRow(icon: "flame.fill", text: "See calories burned and steps")
+                                        HealthFeatureRow(icon: "chart.line.uptrend.xyaxis", text: "View fitness trends")
                                     }
                                     .padding(.vertical, 10)
                                     Button(action: {
@@ -153,6 +246,7 @@ struct HealthView: View {
                                             // After authorization, fetch data if successful
                                             if success {
                                                 healthKitManager.fetchAllStepData()
+                                                healthKitManager.fetchAllCalorieData()
                                             }
                                         }
                                     }) {
@@ -161,9 +255,8 @@ struct HealthView: View {
                                             .frame(maxWidth: .infinity)
                                             .padding()
                                             .foregroundColor(.white)
+                                            .background(Color.accentColor)
                                             .cornerRadius(12)
-                                            .glassEffect(.regular.tint(.accentColor).interactive())
-                                        
                                     }
                                 } else {
                                     // Previously requested - show Settings button + instructions
@@ -202,11 +295,10 @@ struct HealthView: View {
                                             .frame(maxWidth: .infinity)
                                             .padding()
                                             .foregroundColor(.white)
+                                            .background(Color.accentColor)
                                             .cornerRadius(12)
-                                            .glassEffect(.regular.tint(.accentColor).interactive())
-                                            
                                         }
-                                        .padding(30)
+                                        .padding(.horizontal, 30)
                                         
                                         // Manual refresh button
                                         Button(action: {
@@ -252,6 +344,8 @@ struct HealthView: View {
                 // Fetch data if already authorized
                 if healthKitManager.isAuthorized {
                     healthKitManager.fetchAllStepData()
+                    healthKitManager.fetchAllCalorieData()
+                    healthKitManager.fetchTodayActivitySummary()
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
@@ -278,6 +372,34 @@ struct HealthView: View {
 
 // MARK: - Supporting Views
 
+struct ActivityDetail: View {
+    let color: Color
+    let icon: String
+    let title: String
+    let current: Int
+    let goal: Int
+    let unit: String
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.caption)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                
+                Text("\(current)/\(goal) \(unit)")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.primary)
+            }
+        }
+    }
+}
+
 struct InstructionStep: View {
     let number: String
     let text: String
@@ -296,6 +418,39 @@ struct InstructionStep: View {
                 .font(.subheadline)
                 .foregroundColor(.primary)
         }
+    }
+}
+
+struct HealthFeatureRow: View {
+    let icon: String
+    let text: String
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundColor(.accentColor)
+                .frame(width: 24, height: 24)
+            
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+            
+            Spacer()
+        }
+    }
+}
+
+struct ActivityRingView: UIViewRepresentable {
+    let activitySummary: HKActivitySummary
+    
+    func makeUIView(context: Context) -> HKActivityRingView {
+        let ringView = HKActivityRingView()
+        return ringView
+    }
+    
+    func updateUIView(_ uiView: HKActivityRingView, context: Context) {
+        uiView.setActivitySummary(activitySummary, animated: true)
     }
 }
 
