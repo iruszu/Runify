@@ -2,7 +2,7 @@ import SwiftUI
 import MapKit
 
 struct RunSummaryCard: View {
-    @EnvironmentObject var runTracker: RunTracker
+    @Environment(RunTracker.self) private var runTracker
     @Environment(\.modelContext) private var modelContext
     @State private var showingEditSheet = false
     let run: Run
@@ -139,6 +139,7 @@ struct MapSnapshotView: View {
                     }
                 }
                 .interactiveDismissDisabled(true)
+                .disabled(true) // Make map non-interactive (display only)
                 .mapStyle(mapStyle)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(

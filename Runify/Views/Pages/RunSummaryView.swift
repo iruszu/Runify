@@ -9,8 +9,8 @@ import SwiftUI
 import MapKit
 
 struct RunSummaryView: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
     
     var body: some View {
         VStack(spacing: 30) {
@@ -184,6 +184,6 @@ struct SummaryCard: View {
 
 #Preview {
     RunSummaryView()
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }

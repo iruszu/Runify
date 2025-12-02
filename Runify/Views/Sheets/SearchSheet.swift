@@ -9,9 +9,9 @@ import SwiftUI
 import MapKit
 
 struct SearchSheet: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
-    @StateObject private var viewModel = SearchViewModel()
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
+    @State private var viewModel = SearchViewModel()
     
     @State private var selectedLocation: MKMapItem?
     @State private var showLocationDetail = false
@@ -182,7 +182,7 @@ struct SearchSheet: View {
             .sheet(isPresented: $showLocationDetail) {
                 if let location = selectedLocation {
                     LocationSheet(mapItem: location, routeDistance: viewModel.routeDistance)
-                        .environmentObject(runTracker)
+                        .environment(runTracker)
                         .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                         .onDisappear {
@@ -194,7 +194,7 @@ struct SearchSheet: View {
             }
             .sheet(isPresented: $showAllRecommendations) {
                 AllRecommendationsSheet(userLocation: runTracker.lastLocation)
-                    .environmentObject(runTracker)
+                    .environment(runTracker)
             }
             .onAppear {
                 // Set the runTracker reference in viewModel
@@ -209,6 +209,6 @@ struct SearchSheet: View {
 
 #Preview {
     SearchSheet()
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }

@@ -9,8 +9,8 @@ import SwiftUI
 import MapKit
 
 struct LocationSheet: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.dismiss) var dismiss
     let mapItem: MKMapItem
     let routeDistance: Double
@@ -362,7 +362,7 @@ struct RouteInfo {
     sampleMapItem.name = "San Francisco"
     
     return LocationSheet(mapItem: sampleMapItem, routeDistance: 5.0)
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }
 

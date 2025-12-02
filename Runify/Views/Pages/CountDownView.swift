@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct CountDownView: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
-    @StateObject private var countdownTimer = TimerManager()
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
+    @State private var countdownTimer = TimerManager()
     @State private var countdown: Int = 3
     @State private var progress: CGFloat = 1.0
     @State private var scale: CGFloat = 1.0
@@ -88,7 +88,8 @@ struct CountDownView: View {
                     opacity = 0
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 250_000_000) // 0.25 seconds
                     countdown -= 1
                     updateProgress()
                     
@@ -106,7 +107,8 @@ struct CountDownView: View {
                     progress = 0
                 }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 400_000_000) // 0.4 seconds
                     countdownTimer.stopTimer()
                     
                     // Transfer planned route data from coordinator to runTracker
@@ -136,6 +138,6 @@ struct CountDownView: View {
 
 #Preview {
     CountDownView()
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }

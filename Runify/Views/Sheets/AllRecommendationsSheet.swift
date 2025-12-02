@@ -9,7 +9,7 @@ import SwiftUI
 import MapKit
 
 struct AllRecommendationsSheet: View {
-    @EnvironmentObject var runTracker: RunTracker
+    @Environment(RunTracker.self) private var runTracker
     @Environment(\.dismiss) var dismiss
     
     let userLocation: CLLocation?
@@ -176,7 +176,7 @@ struct AllRecommendationsSheet: View {
         .sheet(isPresented: $showLocationDetail) {
             if let location = selectedLocation {
                 LocationSheet(mapItem: location, routeDistance: 0)
-                    .environmentObject(runTracker)
+                    .environment(runTracker)
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
             }
@@ -230,9 +230,13 @@ struct AllRecommendationsSheet: View {
         
         do {
             let response = try await search.start()
-            let sorted = response.mapItems.sorted { item1, item2 in
-                return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
-            }
+            
+            // Move sorting to background thread (CPU-intensive distance calculations)
+            let sorted = await Task.detached(priority: .userInitiated) {
+                return response.mapItems.sorted { item1, item2 in
+                    return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
+                }
+            }.value
             
             await MainActor.run {
                 self[keyPath: keyPath] = sorted
@@ -250,9 +254,13 @@ struct AllRecommendationsSheet: View {
         
         do {
             let response = try await search.start()
-            let sorted = response.mapItems.sorted { item1, item2 in
-                return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
-            }
+            
+            // Move sorting to background thread (CPU-intensive distance calculations)
+            let sorted = await Task.detached(priority: .userInitiated) {
+                return response.mapItems.sorted { item1, item2 in
+                    return userLocation.distance(from: item1.location) < userLocation.distance(from: item2.location)
+                }
+            }.value
             
             await MainActor.run {
                 self[keyPath: keyPath] = sorted

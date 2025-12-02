@@ -11,7 +11,7 @@ import MapKit
 struct RunDetailSheet: View {
     let run: Run
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var runTracker: RunTracker
+    @Environment(RunTracker.self) private var runTracker
     
     // Computed property that updates when run changes
     private var mapRegion: MKCoordinateRegion {
@@ -63,10 +63,7 @@ struct RunDetailSheet: View {
                                     }
                                 }
                             }
-                                        .foregroundColor(.red)
-                                        .font(.title2)
-                                        .background(.white)
-                                        .clipShape(Circle())
+
                                 }
                             }
                         }
@@ -98,8 +95,8 @@ struct RunDetailSheet: View {
 
 
         }
-    }
-}
+
+
 
 // MARK: - Supporting Views
 

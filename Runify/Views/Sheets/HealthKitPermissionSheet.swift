@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HealthKitPermissionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var healthKitManager: HealthKitManager
+    @Environment(HealthKitManager.self) private var healthKitManager
     let onAuthorize: () -> Void
     
     var body: some View {
@@ -81,7 +81,8 @@ struct HealthKitPermissionSheet: View {
                         
                         // Wait for sheet to dismiss before calling onAuthorize
                         if success {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            Task { @MainActor in
+                                try? await Task.sleep(nanoseconds: 400_000_000) // 0.4 seconds
                                 onAuthorize()
                             }
                         }
@@ -100,7 +101,8 @@ struct HealthKitPermissionSheet: View {
                     dismiss()
                     
                     // Wait for sheet to dismiss before calling onAuthorize
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    Task { @MainActor in
+                        try? await Task.sleep(nanoseconds: 400_000_000) // 0.4 seconds
                         onAuthorize()
                     }
                 }
@@ -135,6 +137,6 @@ struct FeatureRow: View {
     HealthKitPermissionSheet {
         print("Authorized")
     }
-    .environmentObject(HealthKitManager())
+    .environment(HealthKitManager())
 }
 

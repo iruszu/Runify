@@ -10,10 +10,10 @@ import MapKit
 
 struct RunOptionsSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var coordinator: AppCoordinator
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var healthKitManager: HealthKitManager
-    @StateObject private var viewModel = SearchViewModel()
+    @Environment(AppCoordinator.self) private var coordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(HealthKitManager.self) private var healthKitManager
+    @State private var viewModel = SearchViewModel()
     
     @State private var selectedLocation: MKMapItem?
     @State private var isGoSelected: Bool = true
@@ -132,7 +132,7 @@ struct RunOptionsSheet: View {
             HealthKitPermissionSheet {
                 proceedWithRun()
             }
-            .environmentObject(healthKitManager)
+            .environment(healthKitManager)
             .presentationDetents([.fraction(0.75)])
         }
         .onAppear {
@@ -300,7 +300,7 @@ struct RouteCard: View {
 
 #Preview {
     RunOptionsSheet()
-        .environmentObject(AppCoordinator())
-        .environmentObject(RunTracker())
-        .environmentObject(HealthKitManager())
+        .environment(AppCoordinator())
+        .environment(RunTracker())
+        .environment(HealthKitManager())
 }

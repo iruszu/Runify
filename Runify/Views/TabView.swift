@@ -10,9 +10,9 @@ import SwiftData
 
 struct MainTabView: View {
     @SceneStorage("selectedTab") var selectedTab = 0 //keeps value alive as long as scene is active
-    @StateObject private var coordinator = AppCoordinator()
-    @StateObject private var runTracker = RunTracker()
-    @EnvironmentObject var healthKitManager: HealthKitManager
+    @State private var coordinator = AppCoordinator()
+    @State private var runTracker = RunTracker()
+    @Environment(HealthKitManager.self) private var healthKitManager
     @State private var showRunOptions = false
     @Environment(\.modelContext) private var modelContext
     
@@ -20,39 +20,39 @@ struct MainTabView: View {
         TabView(selection: $selectedTab) {
             Tab("Home", systemImage: "house", value: 0) {
                 HomeView()
-                    .environmentObject(coordinator)
-                    .environmentObject(runTracker)
+                    .environment(coordinator)
+                    .environment(runTracker)
             }
             Tab("Health", systemImage: "chart.line.text.clipboard", value: 1) {
                 HealthView()
-                    .environmentObject(healthKitManager)
+                    .environment(healthKitManager)
             }
             Tab("Profile", systemImage: "person.circle", value: 2) {
                 ProfileView()
-                    .environmentObject(runTracker)
+                    .environment(runTracker)
             }
             Tab("Map", systemImage: "map", value: 3, role: .search) {
                 MapView()
-                    .environmentObject(coordinator)
-                    .environmentObject(runTracker)
+                    .environment(coordinator)
+                    .environment(runTracker)
             }
 
         }
-        .fullScreenCover(isPresented: $coordinator.showRunningMap) {
+        .fullScreenCover(isPresented: Bindable(coordinator).showRunningMap) {
             RunningMapView()
-                .environmentObject(runTracker)
-                .environmentObject(coordinator)
+                .environment(runTracker)
+                .environment(coordinator)
         }
 
-        .fullScreenCover(isPresented: $coordinator.showCountdown, content: {
+        .fullScreenCover(isPresented: Bindable(coordinator).showCountdown, content: {
             CountDownView()
-                .environmentObject(runTracker) // Pass the RunTracker to the countdown view
-                .environmentObject(coordinator)
+                .environment(runTracker) // Pass the RunTracker to the countdown view
+                .environment(coordinator)
         })
-        .fullScreenCover(isPresented: $coordinator.showRunSummary, content: {
+        .fullScreenCover(isPresented: Bindable(coordinator).showRunSummary, content: {
             RunSummaryView()
-                .environmentObject(runTracker)
-                .environmentObject(coordinator)
+                .environment(runTracker)
+                .environment(coordinator)
         })
         .onAppear {
             // Inject modelContext into RunTracker
@@ -135,14 +135,14 @@ struct MainTabView: View {
     if #available(iOS 26.0, *) {
         return MainTabView()
             .modelContainer(container)
-            .environmentObject(AppCoordinator())
-            .environmentObject(RunTracker())
-            .environmentObject(HealthKitManager())
+            .environment(AppCoordinator())
+            .environment(RunTracker())
+            .environment(HealthKitManager())
     } else {
         // Fallback on earlier versions
         return MainTabView()
             .modelContainer(container)
-            .environmentObject(AppCoordinator())
-            .environmentObject(RunTracker())
+            .environment(AppCoordinator())
+            .environment(RunTracker())
     }
 }

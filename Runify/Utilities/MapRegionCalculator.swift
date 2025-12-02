@@ -14,7 +14,8 @@ struct MapRegionCalculator {
     /// Calculates a bounding region that encompasses the entire run path
     /// - Parameter run: The run object containing location data
     /// - Returns: An MKCoordinateRegion that frames the entire run route
-    static func calculateBoundingRegion(for run: Run) -> MKCoordinateRegion {
+    /// - Note: This is a CPU-intensive operation and should be called off the main thread for large coordinate arrays
+    nonisolated static func calculateBoundingRegion(for run: Run) -> MKCoordinateRegion {
         // Get all coordinates from the run
         var allCoordinates: [CLLocationCoordinate2D] = []
         
@@ -40,7 +41,8 @@ struct MapRegionCalculator {
     /// Calculates a bounding region for a set of coordinates
     /// - Parameter coordinates: Array of CLLocationCoordinate2D points
     /// - Returns: An MKCoordinateRegion that frames all the coordinates
-    static func calculateBoundingRegion(for coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
+    /// - Note: This is a CPU-intensive operation and should be called off the main thread for large arrays
+    nonisolated static func calculateBoundingRegion(for coordinates: [CLLocationCoordinate2D]) -> MKCoordinateRegion {
         guard !coordinates.isEmpty else {
             return MKCoordinateRegion(
                 center: CLLocationCoordinate2D(latitude: 37.7749, longitude: -122.4194),
@@ -75,7 +77,8 @@ struct MapRegionCalculator {
     /// Calculates a bounding region for route coordinates only (used in RunSummaryCard)
     /// - Parameter run: The run object containing location data
     /// - Returns: An MKCoordinateRegion that frames the route coordinates
-    static func calculateRouteRegion(for run: Run) -> MKCoordinateRegion {
+    /// - Note: This is a CPU-intensive operation and should be called off the main thread for large coordinate arrays
+    nonisolated static func calculateRouteRegion(for run: Run) -> MKCoordinateRegion {
         guard !run.locations.isEmpty else {
             // Fallback to start location if no route data
             if let startLocation = run.startLocation {

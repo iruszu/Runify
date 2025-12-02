@@ -7,23 +7,25 @@
 
 import Foundation
 import HealthKit
+import Observation
 
-class HealthKitManager: ObservableObject {
+@Observable
+class HealthKitManager {
     let healthStore = HKHealthStore()
     
-    @Published var isAuthorized = false
-    @Published var authorizationRequested = false
+    var isAuthorized = false
+    var authorizationRequested = false
     
     // Step count data
-    @Published var stepCountToday: Int = 0
-    @Published var thisWeekSteps: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
+    var stepCountToday: Int = 0
+    var thisWeekSteps: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
     
     // Calorie data
-    @Published var caloriesToday: Int = 0
-    @Published var thisWeekCalories: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
+    var caloriesToday: Int = 0
+    var thisWeekCalories: [Int: Int] = [1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0]
     
     // Activity rings data
-    @Published var activitySummary: HKActivitySummary?
+    var activitySummary: HKActivitySummary?
     
     // MARK: - Initialization
     
@@ -31,7 +33,8 @@ class HealthKitManager: ObservableObject {
         checkAuthorizationStatus()
         
         // Automatically fetch step data if already authorized
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
             print("HealthKit: Initial authorization check complete. Authorized: \(self.isAuthorized)")
             if self.isAuthorized {
                 self.fetchAllStepData()
@@ -67,7 +70,7 @@ class HealthKitManager: ObservableObject {
     
     func checkAuthorizationStatus() {
         guard HKHealthStore.isHealthDataAvailable() else {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.isAuthorized = false
                 self.authorizationRequested = false
             }
@@ -79,7 +82,7 @@ class HealthKitManager: ObservableObject {
         
         // If workout permission is not determined, we haven't requested authorization yet
         if workoutStatus == .notDetermined {
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.authorizationRequested = false
                 self.isAuthorized = false
             }
@@ -87,7 +90,7 @@ class HealthKitManager: ObservableObject {
         }
         
         // Mark that we've requested authorization before
-        DispatchQueue.main.async {
+        Task { @MainActor in
             self.authorizationRequested = true
         }
         
@@ -107,7 +110,7 @@ class HealthKitManager: ObservableObject {
             limit: 1,
             sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
         ) { [weak self] _, samples, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 if let error = error {
                     let nsError = error as NSError
                     
@@ -142,7 +145,8 @@ class HealthKitManager: ObservableObject {
         checkAuthorizationStatus()
         
         // Also try to fetch data to verify permissions
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
             print("HealthKit: Current authorization status: \(self?.isAuthorized ?? false)")
             if self?.isAuthorized == true {
                 print("HealthKit: Fetching step data...")
@@ -164,7 +168,7 @@ class HealthKitManager: ObservableObject {
             toShare: typesToWrite,
             read: typesToRead
         ) { [weak self] success, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self?.authorizationRequested = true
                 self?.checkAuthorizationStatus()
                 

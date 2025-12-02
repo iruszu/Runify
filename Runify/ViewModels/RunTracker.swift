@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import MapKit
 import SwiftData
+import Observation
 
 enum MapStyleOption: String, CaseIterable {
     case standard = "Standard"
@@ -50,29 +51,30 @@ enum MapStyleOption: String, CaseIterable {
 }
 
 
-class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
+@Observable
+class RunTracker: NSObject, CLLocationManagerDelegate {
     //MKCoordinateSpan defines how much of the map should be visible
-    @Published var region = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
-    @Published var staticRegion = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))) // Static region for MapView
+    var region = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)))
+    var staticRegion = MapCameraPosition.region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: 49.2593, longitude: -123.247), span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))) // Static region for MapView
     
-    @Published var isRunning = false // Track if the user is currently running
-    @Published var distance: Double = 0.0 // Track the distance run
-    @Published var pace = 0.0
-    @Published var elapsedTime = 0.0 // Track the elapsed time of the run
+    var isRunning = false // Track if the user is currently running
+    var distance: Double = 0.0 // Track the distance run
+    var pace = 0.0
+    var elapsedTime = 0.0 // Track the elapsed time of the run
     private var modelContext: ModelContext? 
     
     // Location tracking
     private var locationManager: CLLocationManager?
-    @Published var startLocation: CLLocation?
-    @Published var lastLocation: CLLocation?
-    @Published var locations: [CLLocation] = [] // Array to store all location points for route drawing
-    @Published var mapStyle: MapStyle = .imagery(elevation: .realistic) // Shared map style for all map views
-    @Published var mapStyleOption: MapStyleOption = .imagery // Track the selected map style option
+    var startLocation: CLLocation?
+    var lastLocation: CLLocation?
+    var locations: [CLLocation] = [] // Array to store all location points for route drawing
+    var mapStyle: MapStyle = .imagery(elevation: .realistic) // Shared map style for all map views
+    var mapStyleOption: MapStyleOption = .imagery // Track the selected map style option
     
     // Planned route data (when running to a destination)
-    @Published var plannedDestinationName: String?
-    @Published var plannedDestinationCoordinate: CLLocationCoordinate2D?
-    @Published var plannedRouteCoordinates: [CLLocationCoordinate2D] = []
+    var plannedDestinationName: String?
+    var plannedDestinationCoordinate: CLLocationCoordinate2D?
+    var plannedRouteCoordinates: [CLLocationCoordinate2D] = []
     
     private let timerManager = TimerManager()
     

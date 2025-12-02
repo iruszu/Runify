@@ -1,20 +1,22 @@
 import SwiftUI
 import Foundation
 import MapKit
+import Observation
 
-class AppCoordinator: ObservableObject {
-    @Published var navigationStack: [Int] = []
+@Observable
+class AppCoordinator {
+    var navigationStack: [Int] = []
     
     // Navigation state
-    @Published var showCountdown = false
-    @Published var showRun = false
-    @Published var showRunSummary = false
-    @Published var showRunningMap = false
+    var showCountdown = false
+    var showRun = false
+    var showRunSummary = false
+    var showRunningMap = false
     
     // Planned route data (set when starting run from a destination)
-    @Published var plannedDestinationName: String?
-    @Published var plannedDestinationCoordinate: CLLocationCoordinate2D?
-    @Published var plannedRoutePolyline: MKPolyline?
+    var plannedDestinationName: String?
+    var plannedDestinationCoordinate: CLLocationCoordinate2D?
+    var plannedRoutePolyline: MKPolyline?
     
     // Navigation methods
     func navigateToCountdown() {

@@ -1,8 +1,10 @@
 import Foundation
+import Observation
 
-class TimerManager: ObservableObject {
-    @Published var isRunning: Bool = false
-    @Published var isPaused: Bool = false
+@Observable
+class TimerManager {
+    var isRunning: Bool = false
+    var isPaused: Bool = false
     
     private var timer: Timer?
     private var pausedTimeInterval: TimeInterval = 0

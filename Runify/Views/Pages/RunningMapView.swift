@@ -9,8 +9,8 @@ import SwiftUI
 import MapKit
 
 struct RunningMapView: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
     @State private var showRunSheet = true // Auto-show RunView sheet
     @State private var showMapSelection = false
     @State private var mapSelection: MapSelection<Int>?
@@ -96,12 +96,12 @@ struct RunningMapView: View {
         }
         .sheet(isPresented: $showMapSelection) {
             MapSelectionSheet()
-                .environmentObject(runTracker)
+                .environment(runTracker)
         }
         .sheet(isPresented: $showRunSheet) {
             RunView()
-                .environmentObject(runTracker)
-                .environmentObject(coordinator)
+                .environment(runTracker)
+                .environment(coordinator)
                 .presentationDetents([.fraction(0.25), .medium])
                 .presentationDragIndicator(.visible)
                 .interactiveDismissDisabled(true) // Cannot dismiss the sheet
@@ -233,6 +233,6 @@ struct FlipDigitView: View {
 
 #Preview {
     RunningMapView()
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }

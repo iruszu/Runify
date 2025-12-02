@@ -10,8 +10,8 @@ import MapKit
 import SwiftData
 
 struct MapView: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.modelContext) private var modelContext
     @Query private var runs: [Run]
     private var filteredRuns: [Run] {
@@ -62,7 +62,7 @@ struct MapView: View {
         NavigationStack {
             ZStack (alignment: .bottom) {
                 
-                Map(position: $runTracker.staticRegion, selection: $selectedRun) {
+                Map(position: Bindable(runTracker).staticRegion, selection: $selectedRun) {
                     UserAnnotation()
                     selectedRunPolyline
                     
@@ -134,19 +134,19 @@ struct MapView: View {
             }
             .sheet(isPresented: $showMapSelection) {
                 MapSelectionSheet()
-                    .environmentObject(runTracker)
+                    .environment(runTracker)
             }
             .sheet(isPresented: $showRunOptions) {
                 RunOptionsSheet()
-                    .environmentObject(coordinator)
+                    .environment(coordinator)
                     .presentationBackground(.clear)
             }
             .sheet(isPresented: $showSearchSheet) {
                 SearchSheet()
                     .presentationDetents([.medium, .large])
                     .presentationDragIndicator(.visible)
-                    .environmentObject(runTracker)
-                    .environmentObject(coordinator)
+                    .environment(runTracker)
+                    .environment(coordinator)
             }
             .sheet(isPresented: Binding(
                 get: { showRunDetailSheet && selectedRun != nil },
@@ -154,7 +154,7 @@ struct MapView: View {
             )) {
                 if let selectedRun = selectedRun {
                     RunDetailSheet(run: selectedRun)
-                        .environmentObject(runTracker)
+                        .environment(runTracker)
                         .presentationDetents([.medium, .large])
                         .presentationDragIndicator(.visible)
                         .presentationBackgroundInteraction(.enabled)
@@ -196,6 +196,6 @@ struct MapView: View {
 
 #Preview {
     MapView()
-        .environmentObject(RunTracker()) // Provide the RunTracker to the preview
-        .environmentObject(AppCoordinator()) // Provide the AppCoordinator to the preview
+        .environment(RunTracker()) // Provide the RunTracker to the preview
+        .environment(AppCoordinator()) // Provide the AppCoordinator to the preview
 }

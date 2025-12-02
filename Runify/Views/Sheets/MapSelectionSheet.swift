@@ -10,7 +10,7 @@ import MapKit
 
 struct MapSelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject var runTracker: RunTracker
+    @Environment(RunTracker.self) private var runTracker
     @State private var selectedStyle: MapStyleOption = .standard
     
     // MapStyleOption enum is now defined in RunTracker.swift

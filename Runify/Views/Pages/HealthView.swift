@@ -10,7 +10,7 @@ import HealthKitUI
 import HealthKit
 
 struct HealthView: View {
-    @EnvironmentObject var healthKitManager: HealthKitManager
+    @Environment(HealthKitManager.self) private var healthKitManager
     
     var body: some View {
         NavigationStack {
@@ -456,6 +456,6 @@ struct ActivityRingView: UIViewRepresentable {
 
 #Preview {
     HealthView()
-        .environmentObject(HealthKitManager())
+        .environment(HealthKitManager())
 }
 

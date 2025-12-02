@@ -11,8 +11,8 @@ import MapKit
 
 struct HomeView: View {
     @Environment(\.modelContext) private var modelContext
-    @EnvironmentObject var coordinator: AppCoordinator
-    @EnvironmentObject var runTracker: RunTracker
+    @Environment(AppCoordinator.self) private var coordinator
+    @Environment(RunTracker.self) private var runTracker
     @Query(sort: \Run.date, order: .reverse) private var runs: [Run]
     @State private var showRunOptions = false
     @State private var pulseAnimation = false
@@ -65,55 +65,54 @@ struct HomeView: View {
                     
                     
                     if runs.isEmpty {
-                        VStack(spacing: 20) {
-                            Text(greeting)
-                                .font(.subheadline)
-                                .padding(.horizontal, 20)
-                                .opacity(0.7)
-                                .offset(y: 20)
-          
-                            Text("Kellie Ho")
-                                .font(.largeTitle)
-                                .bold()
-                                .padding(.horizontal, 20)
-  
+                        VStack(spacing: 0) {
+                            Spacer()
                             
-                            
-                            Image(systemName: "figure.run")
-                                .font(.system(size: 60))
-                                .foregroundColor(.secondary)
-                                .padding(.top, 30)
-                            
-                            
-                            Text("Get started with your first run.")
-                                .font(.title2)
-                                .fontWeight(.medium)
-                            
-                            
-                            StartRunButton {
-                                showRunOptions = true
-                            }
-                            .padding(.top, 100)
-                            .shadow(
-                                color: Color.white.opacity(pulseAnimation ? 0.8 : 0.3),
-                                radius: pulseAnimation ? 30 : 15,
-                                x: 0,
-                                y: 0
-                            )
-                            .scaleEffect(pulseAnimation ? 1.05 : 1.0)
-                            .onAppear {
-                                withAnimation(
-                                    .easeInOut(duration: 1.5)
-                                    .repeatForever(autoreverses: true)
-                                ) {
-                                    pulseAnimation = true
+                            // Modern empty state design
+                            VStack(spacing: 24) {
+                                // Icon with subtle animation
+                                ZStack {
+                                    Circle()
+                                        .fill(.ultraThinMaterial)
+                                        .frame(width: 120, height: 120)
+                                    
+                                    Image(systemName: "figure.run")
+                                        .font(.system(size: 50, weight: .light))
+                                        .foregroundStyle(.primary)
+                                        .symbolEffect(.pulse, options: .repeating, value: pulseAnimation)
                                 }
+                                
+                                // Typography hierarchy
+                                VStack(spacing: 8) {
+                                    Text("Ready to Start?")
+                                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                                        .foregroundStyle(.primary)
+                                    
+           
+                                }
+                                
+                                // Modern button with better styling
+                                StartRunButton {
+                                    showRunOptions = true
+                                }
+                                .padding(.top, 8)
                             }
+                            .padding(.horizontal, 32)
+                            .padding(.vertical, 48)
+                            .frame(maxWidth: .infinity)
                             
-                            
+                            Spacer()
                         }
-                        .padding()
-                        .frame(maxWidth: .infinity, minHeight: 400)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .onAppear {
+                            // Subtle pulse animation for icon
+                            withAnimation(
+                                .easeInOut(duration: 2.0)
+                                .repeatForever(autoreverses: true)
+                            ) {
+                                pulseAnimation = true
+                            }
+                        }
                     } else {
                         Text(greeting)
                             .font(.subheadline)
@@ -162,7 +161,7 @@ struct HomeView: View {
                 }
             .sheet(isPresented: $showRunOptions) {
                 RunOptionsSheet()
-                    .environmentObject(coordinator)
+                    .environment(coordinator)
                     .presentationBackground(.clear)
             }
 

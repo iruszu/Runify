@@ -7,37 +7,39 @@
 
 import SwiftUI
 import MapKit
+import Observation
 
+@Observable
 @MainActor
-class SearchViewModel: ObservableObject {
-    // MARK: - Published Properties
+class SearchViewModel {
+    // MARK: - Properties
     
-    @Published var searchText: String = ""
-    @Published var filterByDistance: Bool = false
-    @Published var routeDistance: Double = 5.0
+    var searchText: String = ""
+    var filterByDistance: Bool = false
+    var routeDistance: Double = 5.0
     
     // Search results
-    @Published var searchResults: [MKMapItem] = []
-    @Published var isSearching: Bool = false
+    var searchResults: [MKMapItem] = []
+    var isSearching: Bool = false
     
     // Recent searches
-    @Published var recentSearches: [RecentSearch] = []
+    var recentSearches: [RecentSearch] = []
     
     // Nearby locations
-    @Published var nearbyLocations: [MKMapItem] = []
-    @Published var isLoadingNearby: Bool = false
+    var nearbyLocations: [MKMapItem] = []
+    var isLoadingNearby: Bool = false
     
     // Recommended routes
-    @Published var recommendedRoutes: [MKMapItem] = []
-    @Published var isLoadingRecommended: Bool = false
+    var recommendedRoutes: [MKMapItem] = []
+    var isLoadingRecommended: Bool = false
     
     // Distance-filtered routes
-    @Published var distanceFilteredRoutes: [MKMapItem] = []
-    @Published var isLoadingDistanceFiltered: Bool = false
+    var distanceFilteredRoutes: [MKMapItem] = []
+    var isLoadingDistanceFiltered: Bool = false
     
     // MARK: - Private Properties
     
-    @AppStorage("recentSearches") private var recentSearchesData: String = "[]"
+    @AppStorage("recentSearches") @ObservationIgnored private var recentSearchesData: String = "[]"
     private var runTracker: RunTracker?
     
     // MARK: - Initialization
@@ -81,33 +83,44 @@ class SearchViewModel: ObservableObject {
         
         do {
             let response = try await search.start()
-            // Filter and sort results by distance from user
-            if let userLocation = runTracker?.lastLocation {
+            
+            // Capture user location before moving to background thread
+            let userLocation = runTracker?.lastLocation
+            
+            // Move heavy computation (filtering and sorting) to background thread
+            let processedResults = await Task.detached(priority: .userInitiated) {
+                guard let userLocation = userLocation else {
+                    // If no user location, just return the default order
+                    return response.mapItems
+                }
+                
                 let userCLLocation = CLLocation(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
                 
-                // Filter out locations over 1000km away
+                // Filter out locations over 1000km away (CPU-intensive)
                 let filteredItems = response.mapItems.filter { item in
                     let distanceInKm = userCLLocation.distance(from: item.location) / 1000
                     return distanceInKm <= 1000
                 }
                 
-                // Sort by distance (closest first)
-                searchResults = filteredItems.sorted { item1, item2 in
+                // Sort by distance (closest first) - CPU-intensive operation
+                return filteredItems.sorted { item1, item2 in
                     let distance1 = userCLLocation.distance(from: item1.location)
                     let distance2 = userCLLocation.distance(from: item2.location)
-                    
                     return distance1 < distance2
                 }
-            } else {
-                // If no user location, just use the default order
-                searchResults = response.mapItems
-            }
+            }.value
             
-            isSearching = false
+            // Update UI on main thread
+            await MainActor.run {
+                self.searchResults = processedResults
+                self.isSearching = false
+            }
         } catch {
             print("Search error: \(error.localizedDescription)")
-            searchResults = []
-            isSearching = false
+            await MainActor.run {
+                self.searchResults = []
+                self.isSearching = false
+            }
         }
     }
     
@@ -180,20 +193,28 @@ class SearchViewModel: ObservableObject {
                 let response = try await search.start()
                 let userCLLocation = CLLocation(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
                 
-                // Filter to 10-20km range and sort by distance
-                let filteredItems = response.mapItems.filter { item in
-                    let distanceInKm = userCLLocation.distance(from: item.location) / 1000
-                    return distanceInKm >= 10 && distanceInKm <= 20
-                }.sorted { item1, item2 in
-                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
-                }
+                // Move filtering and sorting to background thread
+                let processedItems = await Task.detached(priority: .userInitiated) {
+                    // Filter to 10-20km range and sort by distance (CPU-intensive)
+                    return response.mapItems.filter { item in
+                        let distanceInKm = userCLLocation.distance(from: item.location) / 1000
+                        return distanceInKm >= 10 && distanceInKm <= 20
+                    }.sorted { item1, item2 in
+                        return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
+                    }
+                }.value
                 
-                nearbyLocations = Array(filteredItems.prefix(5)) // Show top 5
-                isLoadingNearby = false
+                // Update UI on main thread
+                await MainActor.run {
+                    self.nearbyLocations = Array(processedItems.prefix(5)) // Show top 5
+                    self.isLoadingNearby = false
+                }
             } catch {
                 print("Nearby search error: \(error.localizedDescription)")
-                nearbyLocations = []
-                isLoadingNearby = false
+                await MainActor.run {
+                    self.nearbyLocations = []
+                    self.isLoadingNearby = false
+                }
             }
         }
     }
@@ -238,17 +259,25 @@ class SearchViewModel: ObservableObject {
                 let response = try await search.start()
                 let userCLLocation = CLLocation(latitude: userLocation.coordinate.latitude, longitude: userLocation.coordinate.longitude)
                 
-                // Sort by distance and take top results
-                let sortedItems = response.mapItems.sorted { item1, item2 in
-                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
-                }
+                // Move sorting to background thread
+                let sortedItems = await Task.detached(priority: .userInitiated) {
+                    // Sort by distance (CPU-intensive)
+                    return response.mapItems.sorted { item1, item2 in
+                        return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
+                    }
+                }.value
                 
-                recommendedRoutes = Array(sortedItems.prefix(20))
-                isLoadingRecommended = false
+                // Update UI on main thread
+                await MainActor.run {
+                    self.recommendedRoutes = Array(sortedItems.prefix(20))
+                    self.isLoadingRecommended = false
+                }
             } catch {
                 print("Recommended routes search error: \(error.localizedDescription)")
-                recommendedRoutes = []
-                isLoadingRecommended = false
+                await MainActor.run {
+                    self.recommendedRoutes = []
+                    self.isLoadingRecommended = false
+                }
             }
         }
     }
@@ -300,19 +329,28 @@ class SearchViewModel: ObservableObject {
                 let minDistance = routeDistance * 0.7
                 let maxDistance = routeDistance * 1.3
                 
-                let filteredItems = response.mapItems.filter { item in
-                    let distanceInKm = userCLLocation.distance(from: item.location) / 1000
-                    return distanceInKm >= minDistance && distanceInKm <= maxDistance
-                }.sorted { item1, item2 in
-                    return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
-                }
+                // Move filtering and sorting to background thread
+                let filteredItems = await Task.detached(priority: .userInitiated) {
+                    // Filter and sort by distance (CPU-intensive)
+                    return response.mapItems.filter { item in
+                        let distanceInKm = userCLLocation.distance(from: item.location) / 1000
+                        return distanceInKm >= minDistance && distanceInKm <= maxDistance
+                    }.sorted { item1, item2 in
+                        return userCLLocation.distance(from: item1.location) < userCLLocation.distance(from: item2.location)
+                    }
+                }.value
                 
-                distanceFilteredRoutes = filteredItems
-                isLoadingDistanceFiltered = false
+                // Update UI on main thread
+                await MainActor.run {
+                    self.distanceFilteredRoutes = filteredItems
+                    self.isLoadingDistanceFiltered = false
+                }
             } catch {
                 print("Distance-filtered routes search error: \(error.localizedDescription)")
-                distanceFilteredRoutes = []
-                isLoadingDistanceFiltered = false
+                await MainActor.run {
+                    self.distanceFilteredRoutes = []
+                    self.isLoadingDistanceFiltered = false
+                }
             }
         }
     }

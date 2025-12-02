@@ -9,8 +9,8 @@ import SwiftUI
 import AudioToolbox
 
 struct RunView: View {
-    @EnvironmentObject var runTracker: RunTracker
-    @EnvironmentObject var coordinator: AppCoordinator
+    @Environment(RunTracker.self) private var runTracker
+    @Environment(AppCoordinator.self) private var coordinator
     @Environment(\.colorScheme) var colorScheme
     
 
@@ -121,6 +121,6 @@ struct RunView: View {
 
 #Preview {
     RunView()
-        .environmentObject(RunTracker())
-        .environmentObject(AppCoordinator())
+        .environment(RunTracker())
+        .environment(AppCoordinator())
 }
