@@ -190,13 +190,17 @@ class RunTracker: NSObject, ObservableObject, CLLocationManagerDelegate {
         isRunning = false
         
         // Create a Coordinate object from the start location
-        let startCoordinate = startLocation.map { Coordinate($0.coordinate) }
+        let startCoordinate = startLocation.map { Coordinate($0.coordinate, sequenceIndex: 0) }
         
-        // Convert CLLocation array to Coordinate array
-        let routeCoordinates = locations.map { Coordinate($0.coordinate) }
+        // Convert CLLocation array to Coordinate array with sequence indices
+        let routeCoordinates = locations.enumerated().map { index, location in
+            Coordinate(location.coordinate, sequenceIndex: index)
+        }
         
-        // Convert planned route coordinates to Coordinate array (if exists)
-        let plannedRouteCoords = plannedRouteCoordinates.isEmpty ? nil : plannedRouteCoordinates.map { Coordinate($0) }
+        // Convert planned route coordinates to Coordinate array (if exists) with sequence indices
+        let plannedRouteCoords = plannedRouteCoordinates.isEmpty ? nil : plannedRouteCoordinates.enumerated().map { index, coord in
+            Coordinate(coord, sequenceIndex: index)
+        }
         let destinationCoord = plannedDestinationCoordinate.map { Coordinate($0) }
         
         // Get location name using reverse geocoding

@@ -191,18 +191,21 @@ final class Run: Hashable { //final means we can't create a subcalss from it
 final class Coordinate {
     var latitude: Double
     var longitude: Double
+    var sequenceIndex: Int = 0 // Preserves order in route sequence
     
     // MARK: - Initialization
     
-    init(latitude: Double, longitude: Double) {
+    init(latitude: Double, longitude: Double, sequenceIndex: Int = 0) {
         self.latitude = latitude
         self.longitude = longitude
+        self.sequenceIndex = sequenceIndex
     }
     
     /// Convenience initializer from CLLocationCoordinate2D
-    init(_ coordinate: CLLocationCoordinate2D) {
+    init(_ coordinate: CLLocationCoordinate2D, sequenceIndex: Int = 0) {
         self.latitude = coordinate.latitude
         self.longitude = coordinate.longitude
+        self.sequenceIndex = sequenceIndex
     }
     
     // MARK: - Computed Properties

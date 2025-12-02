@@ -36,7 +36,9 @@ struct MapView: View {
     private var selectedRunPolyline: some MapContent {
         Group {
             if showRouteOnMap, let selectedRun = selectedRun, !selectedRun.locations.isEmpty {
-                let coordinates = selectedRun.locations.map { $0.clCoordinate }
+                // Sort by sequence index to ensure correct order
+                let sortedLocations = selectedRun.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                let coordinates = sortedLocations.map { $0.clCoordinate }
                 let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                 MapPolyline(polyline)
                     .stroke(.orange, lineWidth: 4)

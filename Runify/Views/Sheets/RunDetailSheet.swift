@@ -31,7 +31,9 @@ struct RunDetailSheet: View {
                         Map(position: .constant(.region(mapRegion))) {
                             // Show the run route
                             if !run.locations.isEmpty {
-                                let coordinates = run.locations.map { $0.clCoordinate }
+                                // Sort by sequence index to ensure correct order
+                                let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                                let coordinates = sortedLocations.map { $0.clCoordinate }
                                 let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                                 MapPolyline(polyline)
                                     .stroke(.blue, lineWidth: 4)
@@ -48,10 +50,19 @@ struct RunDetailSheet: View {
                                 }
                             }
                             
-                            // End marker (last location)
-                            if let lastLocation = run.locations.last {
-                                Annotation("End", coordinate: lastLocation.clCoordinate) {
-                                    Image(systemName: "stop.circle.fill")
+                            // End marker (last location in sorted sequence)
+                            if !run.locations.isEmpty {
+                                let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                                if let lastLocation = sortedLocations.last {
+                                    Annotation("Finish", coordinate: lastLocation.clCoordinate) {
+                                        Image(systemName: "flag.checkered")
+                                            .foregroundColor(.red)
+                                            .font(.title2)
+                                            .background(.white)
+                                            .clipShape(Circle())
+                                    }
+                                }
+                            }
                                         .foregroundColor(.red)
                                         .font(.title2)
                                         .background(.white)

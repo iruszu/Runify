@@ -16,7 +16,6 @@ struct RunSummaryCard: View {
     
 
         }
-        .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
         .overlay(alignment: .topTrailing) {
             // Heart button for favoriting
             Button {
@@ -69,7 +68,7 @@ struct MetricCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
-        .glassEffect(.regular.tint(.blue.opacity(0.1)), in: RoundedRectangle(cornerRadius: 12))
+
     }
 }
 
@@ -89,7 +88,9 @@ struct MapSnapshotView: View {
                 Map(position: .constant(.region(region))) {
                     // Show planned route (if exists) - semi-transparent blue
                     if let plannedRoute = run.plannedRoute, !plannedRoute.isEmpty {
-                        let coordinates = plannedRoute.map { $0.clCoordinate }
+                        // Sort by sequence index to ensure correct order
+                        let sortedPlannedRoute = plannedRoute.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                        let coordinates = sortedPlannedRoute.map { $0.clCoordinate }
                         let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                         MapPolyline(polyline)
                             .stroke(.blue.opacity(0.5), lineWidth: 4)
@@ -97,11 +98,9 @@ struct MapSnapshotView: View {
                     
                     // Show actual route - solid orange with smooth rendering
                     if !run.locations.isEmpty && run.locations.count > 1 {
-                        // Convert saved Coordinate objects to CLLocation objects to match RunSummaryView approach
-                        let clLocations = run.locations.map { coordinate in
-                            CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
-                        }
-                        let coordinates = clLocations.map { $0.coordinate }
+                        // Sort by sequence index to ensure correct order (prevents zig-zags)
+                        let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                        let coordinates = sortedLocations.map { $0.clCoordinate }
                         let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
                         MapPolyline(polyline)
                             .stroke(.orange, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
@@ -124,6 +123,20 @@ struct MapSnapshotView: View {
                     // Start marker
                     Marker("Start", coordinate: startLocation.clCoordinate)
                         .tint(.green)
+                    
+                    // End marker (last location in route)
+                    if !run.locations.isEmpty {
+                        let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+                        if let lastLocation = sortedLocations.last {
+                            Annotation("Finish", coordinate: lastLocation.clCoordinate) {
+                                Image(systemName: "flag.checkered")
+                                    .foregroundColor(.red)
+                                    .font(.title2)
+                                    .background(.white)
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }
                 }
                 .interactiveDismissDisabled(true)
                 .mapStyle(mapStyle)
