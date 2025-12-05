@@ -149,7 +149,9 @@ class HealthKitManager {
             try? await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
             print("HealthKit: Current authorization status: \(self?.isAuthorized ?? false)")
             if self?.isAuthorized == true {
-                print("HealthKit: Fetching step data...")
+                print("HealthKit: Fetching health data...")
+                // These functions use callbacks and execute asynchronously
+                // They can be called in parallel since they're independent
                 self?.fetchAllStepData()
                 self?.fetchAllCalorieData()
                 self?.fetchTodayActivitySummary()
@@ -172,7 +174,8 @@ class HealthKitManager {
                 self?.authorizationRequested = true
                 self?.checkAuthorizationStatus()
                 
-                // Automatically fetch step data after authorization
+                // Automatically fetch health data after authorization
+                // These execute asynchronously via callbacks, so they run concurrently
                 if success {
                     self?.fetchAllStepData()
                     self?.fetchAllCalorieData()
