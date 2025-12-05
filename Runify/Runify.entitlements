@@ -8,5 +8,7 @@
 	<true/>
 	<key>com.apple.developer.weatherkit</key>
 	<true/>
+	<key>com.apple.developer.usernotifications.communication</key>
+	<true/>
 </dict>
 </plist>

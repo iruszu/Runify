@@ -77,6 +77,8 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
     var plannedRouteCoordinates: [CLLocationCoordinate2D] = []
     
     private let timerManager = TimerManager()
+    private var runStartTime: Date?
+    private var currentRunId: UUID?
     
     override init() {
         super.init()
@@ -142,6 +144,21 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         pace = 0.0 // Reset pace
         elapsedTime = 0.0 // Reset elapsed time
         
+        // Generate unique ID for this run
+        currentRunId = UUID()
+        runStartTime = Date()
+        
+        // Start Live Activity (iOS 16.1+)
+        if #available(iOS 16.1, *) {
+            Task { @MainActor in
+                LiveActivityManager.shared.startActivity(
+                    runId: currentRunId!,
+                    startTime: runStartTime!,
+                    destinationName: plannedDestinationName
+                )
+            }
+        }
+        
         // Enable background location if possible
         enableBackgroundLocationIfNeeded()
         
@@ -154,6 +171,18 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
             if self.distance > 0 {
                 self.pace = (Double(self.elapsedTime) / 60) / (self.distance / 1000) // Calculate pace in minutes per kilometer
             }
+            
+            // Update Live Activity every second
+            if #available(iOS 16.1, *) {
+                Task { @MainActor in
+                    LiveActivityManager.shared.updateActivity(
+                        distance: self.distance,
+                        elapsedTime: self.elapsedTime,
+                        pace: self.pace,
+                        isPaused: false
+                    )
+                }
+            }
         }
         
         locationManager?.startUpdatingLocation() // Start updating location when the run starts
@@ -163,6 +192,18 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         locationManager?.stopUpdatingLocation() // Stop updating location when the run is paused
         timerManager.pauseTimer()
         isRunning = false
+        
+        // Update Live Activity to show paused state
+        if #available(iOS 16.1, *) {
+            Task { @MainActor in
+                LiveActivityManager.shared.updateActivity(
+                    distance: distance,
+                    elapsedTime: elapsedTime,
+                    pace: pace,
+                    isPaused: true
+                )
+            }
+        }
     }
     
     func resumeRun() {
@@ -174,6 +215,18 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
             
             if self.distance > 0 {
                 self.pace = (Double(self.elapsedTime) / 60) / (self.distance / 1000) // Calculate pace in minutes per kilometer
+            }
+            
+            // Update Live Activity every second
+            if #available(iOS 16.1, *) {
+                Task { @MainActor in
+                    LiveActivityManager.shared.updateActivity(
+                        distance: self.distance,
+                        elapsedTime: self.elapsedTime,
+                        pace: self.pace,
+                        isPaused: false
+                    )
+                }
             }
         }
         isRunning = true
@@ -190,6 +243,20 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         disableBackgroundLocation() // Disable background location updates
         timerManager.stopTimer()
         isRunning = false
+        
+        // End Live Activity with final stats
+        if #available(iOS 16.1, *) {
+            Task { @MainActor in
+                LiveActivityManager.shared.endActivity(
+                    finalDistance: distance,
+                    finalTime: elapsedTime
+                )
+            }
+        }
+        
+        // Reset run tracking variables
+        currentRunId = nil
+        runStartTime = nil
         
         // Create a Coordinate object from the start location
         let startCoordinate = startLocation.map { Coordinate($0.coordinate, sequenceIndex: 0) }
@@ -319,6 +386,18 @@ extension RunTracker {
                 
                 if let lastLocation {
                     distance += lastLocation.distance(from: location) // calculates the distance from the last location to the current location
+                    
+                    // Update Live Activity when distance changes
+                    if #available(iOS 16.1, *) {
+                        Task { @MainActor in
+                            LiveActivityManager.shared.updateActivity(
+                                distance: self.distance,
+                                elapsedTime: self.elapsedTime,
+                                pace: self.pace,
+                                isPaused: false
+                            )
+                        }
+                    }
                 }
                 
                 lastLocation = location // updates the last location so we can track the distance
