@@ -7,11 +7,41 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AB62AA242EE396AE0013D599 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB62A91D2EE392EB0013D599 /* WidgetKit.framework */; };
+		AB62AA252EE396AE0013D599 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AB62A91F2EE392EB0013D599 /* SwiftUI.framework */; };
+		AB62AA362EE396B10013D599 /* RunifyWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AB62AA232EE396AE0013D599 /* RunifyWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		ABDEB7872E9CB50900BDE26C /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABDEB7862E9CB50900BDE26C /* HealthKit.framework */; };
 		ABDEB7892E9CB51000BDE26C /* HealthKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		AB62AA342EE396B10013D599 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = ABA9E14A2E53F72000138E08 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AB62AA222EE396AE0013D599;
+			remoteInfo = RunifyWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AB62A9362EE392ED0013D599 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				AB62AA362EE396B10013D599 /* RunifyWidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		AB62A91D2EE392EB0013D599 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		AB62A91F2EE392EB0013D599 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		AB62AA232EE396AE0013D599 /* RunifyWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RunifyWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABA9E1522E53F72000138E08 /* Runify.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Runify.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABDEB7862E9CB50900BDE26C /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKitUI.framework; path = System/Library/Frameworks/HealthKitUI.framework; sourceTree = SDKROOT; };
@@ -25,9 +55,24 @@
 			);
 			target = ABA9E1512E53F72000138E08 /* Runify */;
 		};
+		AB62AA3A2EE396B10013D599 /* Exceptions for "RunifyWidget" folder in "RunifyWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AB62AA222EE396AE0013D599 /* RunifyWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		AB62AA262EE396AE0013D599 /* RunifyWidget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				AB62AA3A2EE396B10013D599 /* Exceptions for "RunifyWidget" folder in "RunifyWidgetExtension" target */,
+			);
+			path = RunifyWidget;
+			sourceTree = "<group>";
+		};
 		ABA9E1542E53F72000138E08 /* Runify */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
@@ -39,6 +84,15 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		AB62AA202EE396AE0013D599 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AB62AA252EE396AE0013D599 /* SwiftUI.framework in Frameworks */,
+				AB62AA242EE396AE0013D599 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ABA9E14F2E53F72000138E08 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -55,6 +109,7 @@
 			isa = PBXGroup;
 			children = (
 				ABA9E1542E53F72000138E08 /* Runify */,
+				AB62AA262EE396AE0013D599 /* RunifyWidget */,
 				ABDEB7852E9CB50800BDE26C /* Frameworks */,
 				ABA9E1532E53F72000138E08 /* Products */,
 			);
@@ -64,6 +119,7 @@
 			isa = PBXGroup;
 			children = (
 				ABA9E1522E53F72000138E08 /* Runify.app */,
+				AB62AA232EE396AE0013D599 /* RunifyWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -73,6 +129,8 @@
 			children = (
 				ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */,
 				ABDEB7862E9CB50900BDE26C /* HealthKit.framework */,
+				AB62A91D2EE392EB0013D599 /* WidgetKit.framework */,
+				AB62A91F2EE392EB0013D599 /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -80,6 +138,28 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		AB62AA222EE396AE0013D599 /* RunifyWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AB62AA372EE396B10013D599 /* Build configuration list for PBXNativeTarget "RunifyWidgetExtension" */;
+			buildPhases = (
+				AB62AA1F2EE396AE0013D599 /* Sources */,
+				AB62AA202EE396AE0013D599 /* Frameworks */,
+				AB62AA212EE396AE0013D599 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AB62AA262EE396AE0013D599 /* RunifyWidget */,
+			);
+			name = RunifyWidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = RunifyWidgetExtension;
+			productReference = AB62AA232EE396AE0013D599 /* RunifyWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		ABA9E1512E53F72000138E08 /* Runify */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = ABA9E15D2E53F72200138E08 /* Build configuration list for PBXNativeTarget "Runify" */;
@@ -87,10 +167,12 @@
 				ABA9E14E2E53F72000138E08 /* Sources */,
 				ABA9E14F2E53F72000138E08 /* Frameworks */,
 				ABA9E1502E53F72000138E08 /* Resources */,
+				AB62A9362EE392ED0013D599 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AB62AA352EE396B10013D599 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				ABA9E1542E53F72000138E08 /* Runify */,
@@ -109,9 +191,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1640;
+				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
+					AB62AA222EE396AE0013D599 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
 					ABA9E1512E53F72000138E08 = {
 						CreatedOnToolsVersion = 16.4;
 					};
@@ -134,11 +219,19 @@
 			projectRoot = "";
 			targets = (
 				ABA9E1512E53F72000138E08 /* Runify */,
+				AB62AA222EE396AE0013D599 /* RunifyWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		AB62AA212EE396AE0013D599 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ABA9E1502E53F72000138E08 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -149,6 +242,13 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		AB62AA1F2EE396AE0013D599 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		ABA9E14E2E53F72000138E08 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -158,7 +258,79 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		AB62AA352EE396B10013D599 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AB62AA222EE396AE0013D599 /* RunifyWidgetExtension */;
+			targetProxy = AB62AA342EE396B10013D599 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		AB62AA382EE396B10013D599 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JH5HRRGFQZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunifyWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RunifyWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify.RunifyWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AB62AA392EE396B10013D599 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = JH5HRRGFQZ;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = RunifyWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = RunifyWidget;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify.RunifyWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		ABA9E15B2E53F72200138E08 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -289,6 +461,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Runify/Runify.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
@@ -297,11 +470,11 @@
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs access to read your health data to track your running progress and fitness metrics.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app needs to write workout data to your Health app to track your runs.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to track your runs even when in background";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to track your runs";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -315,6 +488,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -332,6 +506,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CODE_SIGN_ENTITLEMENTS = Runify/Runify.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
@@ -340,11 +515,11 @@
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
-				INFOPLIST_KEY_NSHealthShareUsageDescription = "Runify needs access to your health data to track your runs, monitor your heart rate, and provide personalized fitness insights to help you achieve your running goals.";
-				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "Runify needs to save your workout data to track your fitness progress and provide detailed run analytics.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "This app needs access to read your health data to track your running progress and fitness metrics.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "This app needs to write workout data to your Health app to track your runs.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Please allow access to your location to track your runs";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Please allow access to your location to track your runs in real time.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "This app needs location access to track your runs even when in background";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location access to track your runs";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -358,6 +533,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kellieho.Runify;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
@@ -371,6 +547,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		AB62AA372EE396B10013D599 /* Build configuration list for PBXNativeTarget "RunifyWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AB62AA382EE396B10013D599 /* Debug */,
+				AB62AA392EE396B10013D599 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		ABA9E14D2E53F72000138E08 /* Build configuration list for PBXProject "Runify" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
