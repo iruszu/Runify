@@ -2,173 +2,184 @@
 //  LiveActivityManager.swift
 //  Runify
 //
-//  Manages Live Activities for run tracking
+//  Created by Kellie Ho on 2025-12-05.
 //
 
 import Foundation
 import ActivityKit
-import SwiftUI
+import WidgetKit
 
-@available(iOS 16.1, *)
+// Shared Activity Attributes - must match RunifyWidgetLiveActivity.swift
+struct RunifyWidgetAttributes: ActivityAttributes {
+    public struct ContentState: Codable, Hashable {
+        var distance: Double // in meters
+        var elapsedTime: TimeInterval // in seconds
+        var pace: Double // min/km
+        var locationName: String
+        var calories: Int? // calories burned (optional)
+        var paceHistory: [Double] // Last 20 pace readings for chart
+    }
+    
+    var runId: String
+    var startTime: Date
+}
+
 @MainActor
-class LiveActivityManager {
-    static let shared = LiveActivityManager()
+class LiveActivityManager: ObservableObject {
+    @Published var currentActivity: Activity<RunifyWidgetAttributes>?
     
-    private var currentActivity: Activity<RunActivityAttributes>?
+    private var updateTimer: Timer?
     
-    // Track last update state to avoid unnecessary updates
-    private var lastUpdateState: RunActivityAttributes.ContentState?
-    
-    private init() {}
-    
-    /// Start a Live Activity for an active run
-    func startActivity(
-        runId: UUID,
+    /// Start a Live Activity for a run
+    func startLiveActivity(
+        runId: String,
         startTime: Date,
-        destinationName: String? = nil
+        locationName: String = "Starting..."
     ) {
-        // Check if ActivityKit is available
-        let authInfo = ActivityAuthorizationInfo()
-        print("🔍 Live Activity Authorization:")
-        print("   - Are activities enabled: \(authInfo.areActivitiesEnabled)")
-        print("   - Frequent pushes enabled: \(authInfo.frequentPushesEnabled)")
-        
-        guard authInfo.areActivitiesEnabled else {
-            print("⚠️ Live Activities are not enabled in Settings")
-            print("   Please enable in: Settings > Runify > Live Activities")
+        // Check if Live Activities are available
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("⚠️ Live Activities are not enabled")
             return
         }
         
-        // Check if there's already an activity running
-        if currentActivity != nil {
-            print("⚠️ Live Activity already running, ending previous one")
-            endActivity(finalDistance: nil, finalTime: nil)
-        }
-        
-        // Reset last update state
-        lastUpdateState = nil
-        
-        let attributes = RunActivityAttributes(
+        let attributes = RunifyWidgetAttributes(
             runId: runId,
-            startTime: startTime,
-            destinationName: destinationName
+            startTime: startTime
         )
         
-        let initialContentState = RunActivityAttributes.ContentState(
-            distance: 0.0,
-            elapsedTime: 0.0,
-            pace: 0.0,
-            isPaused: false,
-            currentLocation: nil
+        let initialState = RunifyWidgetAttributes.ContentState(
+            distance: 0,
+            elapsedTime: 0,
+            pace: 0,
+            locationName: locationName,
+            calories: nil,
+            paceHistory: []
         )
         
         do {
-            let activity = try Activity<RunActivityAttributes>.request(
+            let activity = try Activity<RunifyWidgetAttributes>.request(
                 attributes: attributes,
-                content: ActivityContent(state: initialContentState, staleDate: nil),
-                pushType: .token // Enable push token for server-driven updates
+                content: .init(state: initialState, staleDate: nil),
+                pushType: nil
             )
-            currentActivity = activity
-            print("✅ Live Activity started successfully")
-            print("   Activity ID: \(activity.id)")
-            print("   Check Lock Screen and Dynamic Island (iPhone 14 Pro+)")
             
-            // Monitor push token for server-driven updates (optional)
-            Task {
-                await monitorPushToken(for: activity)
-            }
+            currentActivity = activity
+            print("✅ Live Activity started: \(runId)")
+            
+            // Start periodic updates
+            startUpdateTimer()
         } catch {
-            print("❌ Failed to start Live Activity: \(error.localizedDescription)")
-            print("   Error details: \(error)")
+            print("❌ Error starting Live Activity: \(error.localizedDescription)")
         }
     }
     
     /// Update the Live Activity with current run data
-    /// Only updates if content has actually changed (performance optimization)
-    func updateActivity(
+    func updateLiveActivity(
         distance: Double,
         elapsedTime: TimeInterval,
         pace: Double,
-        isPaused: Bool,
-        currentLocation: String? = nil
+        locationName: String,
+        calories: Int? = nil,
+        paceHistory: [Double] = []
     ) {
         guard let activity = currentActivity else { return }
         
-        let updatedState = RunActivityAttributes.ContentState(
+        // Get existing pace history and add new pace
+        var updatedPaceHistory = activity.content.state.paceHistory
+        if pace > 0 {
+            updatedPaceHistory.append(pace)
+            // Keep only last 20 readings
+            if updatedPaceHistory.count > 20 {
+                updatedPaceHistory.removeFirst()
+            }
+        }
+        
+        // Use provided paceHistory if available, otherwise use updated one
+        let finalPaceHistory = paceHistory.isEmpty ? updatedPaceHistory : paceHistory
+        
+        let updatedState = RunifyWidgetAttributes.ContentState(
             distance: distance,
             elapsedTime: elapsedTime,
             pace: pace,
-            isPaused: isPaused,
-            currentLocation: currentLocation
+            locationName: locationName,
+            calories: calories,
+            paceHistory: finalPaceHistory
         )
         
-        // Performance optimization: Only update if state has changed significantly
-        // This prevents unnecessary updates when values haven't changed meaningfully
-        if let lastState = lastUpdateState {
-            // Check if values have changed meaningfully (avoid micro-updates)
-            let distanceChanged = abs(lastState.distance - distance) >= 10 // 10 meters
-            let timeChanged = abs(lastState.elapsedTime - elapsedTime) >= 1.0 // 1 second
-            let paceChanged = abs(lastState.pace - pace) >= 0.1 // 0.1 min/km
-            let pauseStateChanged = lastState.isPaused != isPaused
-            
-            // Only update if something meaningful changed
-            if !distanceChanged && !timeChanged && !paceChanged && !pauseStateChanged {
-                return // Skip update - no meaningful change
-            }
-        }
-        
-        lastUpdateState = updatedState
-        
-        // Set stale date to 1 hour from now (content becomes stale after 1 hour)
-        let staleDate = Calendar.current.date(byAdding: .hour, value: 1, to: Date())
-        
         Task {
-            await activity.update(ActivityContent(state: updatedState, staleDate: staleDate))
+            await activity.update(
+                .init(state: updatedState, staleDate: nil)
+            )
         }
+        
+        // Also update shared data for widget
+        let sharedData = SharedRunData(
+            distance: distance,
+            duration: elapsedTime,
+            pace: pace,
+            locationName: locationName,
+            date: Date(),
+            isRunning: true,
+            elapsedTime: elapsedTime,
+            startTime: activity.attributes.startTime
+        )
+        SharedRunData.saveActiveRun(sharedData)
     }
     
-    /// End the Live Activity (when run stops)
-    func endActivity(finalDistance: Double? = nil, finalTime: TimeInterval? = nil) {
+    /// End the Live Activity
+    func endLiveActivity() {
         guard let activity = currentActivity else { return }
         
+        // Get final state from current activity
+        let finalState = RunifyWidgetAttributes.ContentState(
+            distance: activity.content.state.distance,
+            elapsedTime: activity.content.state.elapsedTime,
+            pace: activity.content.state.pace,
+            locationName: activity.content.state.locationName,
+            calories: activity.content.state.calories,
+            paceHistory: activity.content.state.paceHistory
+        )
+        
         Task {
-            // Create final state with completion data
-            let finalState = RunActivityAttributes.ContentState(
-                distance: finalDistance ?? 0.0,
-                elapsedTime: finalTime ?? 0.0,
-                pace: 0.0,
-                isPaused: false,
-                currentLocation: "Run Complete"
-            )
-            
-            // End with final state and dismiss after 5 seconds (gives user time to see completion)
             await activity.end(
-                ActivityContent(state: finalState, staleDate: nil),
+                .init(state: finalState, staleDate: nil),
                 dismissalPolicy: .after(.now.addingTimeInterval(5))
             )
-            
-            await MainActor.run {
-                currentActivity = nil
-                lastUpdateState = nil // Reset state tracking
+        }
+        
+        // Stop update timer
+        stopUpdateTimer()
+        
+        // Clear active run data
+        SharedRunData.clearActiveRun()
+        
+        // Clear current activity
+        currentActivity = nil
+        
+        print("✅ Live Activity ended")
+    }
+    
+    /// Start a timer to periodically update the Live Activity
+    private func startUpdateTimer() {
+        stopUpdateTimer() // Make sure we don't have multiple timers
+        
+        updateTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                // This will be called from RunTracker's update method
+                // The timer is just to ensure we have a mechanism for updates
             }
-            print("✅ Live Activity ended")
         }
     }
     
-    /// Monitor push token for server-driven updates
-    private func monitorPushToken(for activity: Activity<RunActivityAttributes>) async {
-        for await pushToken in activity.pushTokenUpdates {
-            let tokenString = pushToken.reduce("") { $0 + String(format: "%02x", $1) }
-            print("📱 Live Activity Push Token: \(tokenString)")
-            print("   Activity ID: \(activity.id)")
-            // TODO: Send token to your server for remote updates
-            // await sendPushTokenToServer(tokenString, activityId: activity.id)
-        }
-    }
-    
-    /// Check if a Live Activity is currently active
-    var isActive: Bool {
-        return currentActivity != nil
+    /// Stop the update timer
+    private func stopUpdateTimer() {
+        updateTimer?.invalidate()
+        updateTimer = nil
     }
 }
+
+// Import the widget attributes from the widget extension
+// Note: In a real app, you'd typically share this in a shared framework
+// For now, we'll need to make sure RunifyWidgetAttributes is accessible
+// This might require creating a shared target or duplicating the struct
 
