@@ -5,16 +5,27 @@ struct RunSummaryCard: View {
     @Environment(RunTracker.self) private var runTracker
     @Environment(\.modelContext) private var modelContext
     @State private var showingEditSheet = false
+    @State private var cachedSnapshot: UIImage?
+    @State private var isLoadingSnapshot = true
     let run: Run
 
     var body: some View {
         ZStack {
-            MapSnapshotView(snapshot: nil, run: run, mapStyle: runTracker.mapStyle)
+            MapSnapshotView(snapshot: cachedSnapshot, run: run, mapStyle: runTracker.mapStyle, isLoading: isLoadingSnapshot)
             RunDataView(run: run)
                 .padding(.top, 200)
                 .offset(x: 20, y: 20)
     
 
+        }
+        .task {
+            await loadSnapshot()
+        }
+        .onChange(of: runTracker.mapStyleOption) {
+            // Reload snapshot when map style changes
+            Task {
+                await loadSnapshot()
+            }
         }
         .overlay(alignment: .topTrailing) {
             // Heart button for favoriting
@@ -42,6 +53,21 @@ struct RunSummaryCard: View {
                 .presentationCornerRadius(20)
         }
         
+    }
+    
+    // MARK: - Snapshot Loading
+    
+    private func loadSnapshot() async {
+        isLoadingSnapshot = true
+        let snapshot = await MapSnapshotCache.shared.getSnapshot(
+            for: run,
+            mapStyle: runTracker.mapStyleOption,
+            size: CGSize(width: 300, height: 400)
+        )
+        await MainActor.run {
+            cachedSnapshot = snapshot
+            isLoadingSnapshot = false
+        }
     }
 }
 
@@ -77,11 +103,24 @@ struct MapSnapshotView: View {
     let snapshot: UIImage?
     let run: Run
     let mapStyle: MapStyle
+    let isLoading: Bool
 
     
     var body: some View {
         ZStack {
-            if let startLocation = run.startLocation {
+            if let snapshot = snapshot {
+                // Display cached snapshot image
+                Image(uiImage: snapshot)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 300, height: 400)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                    )
+            } else if let startLocation = run.startLocation {
+                // Fallback to live Map view if snapshot not available
                 // Calculate region that encompasses the entire route
                 let region = calculateRouteRegion()
                 
@@ -146,6 +185,27 @@ struct MapSnapshotView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
                 )
+            } else {
+                // Loading or no location placeholder
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.secondary.opacity(0.1))
+                    .frame(width: 300, height: 400)
+                    .overlay(
+                        Group {
+                            if isLoading {
+                                ProgressView()
+                            } else {
+                                VStack {
+                                    Image(systemName: "location.slash")
+                                        .font(.title2)
+                                        .foregroundColor(.secondary)
+                                    Text("No location data")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                    )
             }
 
             VStack {
