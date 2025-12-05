@@ -198,23 +198,25 @@ struct AllRecommendationsSheet: View {
                 longitudinalMeters: 100000
             )
             
-            // Load each POI type separately
-            await loadPOIType(.park, into: \.parks, region: region, userLocation: userLocation)
-            await loadPOIType(.beach, into: \.beaches, region: region, userLocation: userLocation)
-            await loadPOIType(.nationalPark, into: \.nationalParks, region: region, userLocation: userLocation)
-            await loadPOIType(.campground, into: \.campgrounds, region: region, userLocation: userLocation)
+            // Load all POI types in parallel using async let for better performance
+            async let parksTask = loadPOIType(.park, into: \.parks, region: region, userLocation: userLocation)
+            async let beachesTask = loadPOIType(.beach, into: \.beaches, region: region, userLocation: userLocation)
+            async let nationalParksTask = loadPOIType(.nationalPark, into: \.nationalParks, region: region, userLocation: userLocation)
+            async let campgroundsTask = loadPOIType(.campground, into: \.campgrounds, region: region, userLocation: userLocation)
+            async let waterfrontTask = loadMultiplePOITypes([.marina, .aquarium], into: \.waterfront, region: region, userLocation: userLocation)
+            async let landmarksTask = loadMultiplePOITypes([.museum, .library, .stadium, .zoo], into: \.landmarks, region: region, userLocation: userLocation)
+            async let universitiesTask = loadPOIType(.university, into: \.universities, region: region, userLocation: userLocation)
+            async let popularDestinationsTask = loadMultiplePOITypes([.restaurant, .cafe, .store, .movieTheater], into: \.popularDestinations, region: region, userLocation: userLocation)
             
-            // Load waterfront locations (marina, aquarium)
-            await loadMultiplePOITypes([.marina, .aquarium], into: \.waterfront, region: region, userLocation: userLocation)
-            
-            // Load landmarks (museums, libraries, stadiums, zoo)
-            await loadMultiplePOITypes([.museum, .library, .stadium, .zoo], into: \.landmarks, region: region, userLocation: userLocation)
-            
-            // Load universities
-            await loadPOIType(.university, into: \.universities, region: region, userLocation: userLocation)
-            
-            // Load popular destinations (restaurants, cafes, stores, theaters)
-            await loadMultiplePOITypes([.restaurant, .cafe, .store, .movieTheater], into: \.popularDestinations, region: region, userLocation: userLocation)
+            // Wait for all tasks to complete (they run in parallel)
+            await parksTask
+            await beachesTask
+            await nationalParksTask
+            await campgroundsTask
+            await waterfrontTask
+            await landmarksTask
+            await universitiesTask
+            await popularDestinationsTask
             
             await MainActor.run {
                 isLoading = false
