@@ -79,9 +79,37 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
     private let timerManager = TimerManager()
     private var runStartTime: Date?
     private var currentRunId: UUID?
+    private var liveActivityManager: LiveActivityManager?
+    private var currentLocationName: String = "Starting..."
+    private var healthKitManager: HealthKitManager?
+    private var paceHistory: [Double] = [] // Track pace history for chart
+    private var caloriesBurned: Int = 0 // Track calories during run
+    
+    func setLiveActivityManager(_ manager: LiveActivityManager) {
+        self.liveActivityManager = manager
+    }
+    
+    func setHealthKitManager(_ manager: HealthKitManager) {
+        self.healthKitManager = manager
+    }
     
     override init() {
         super.init()
+        
+        // Listen for pause/stop notifications from widget
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handlePauseRun),
+            name: NSNotification.Name("PauseRun"),
+            object: nil
+        )
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleStopRun),
+            name: NSNotification.Name("StopRun"),
+            object: nil
+        )
         
         // Request location data
         Task {
@@ -103,6 +131,22 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
                 locationManager?.startUpdatingLocation() // Start updating location
             }
         }
+    }
+    
+    @objc private func handlePauseRun() {
+        if isRunning {
+            pauseRun()
+        }
+    }
+    
+    @MainActor @objc private func handleStopRun() {
+        if isRunning {
+            stopRun()
+        }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
     
     func setModelContext(_ context: ModelContext) {
@@ -133,7 +177,7 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
     
     
     // When the user starts a run, we want to start tracking their location
-    func startRun() {
+    @MainActor func startRun() {
         startLocation = nil // Reset start location because a new run is starting
         lastLocation = nil // Reset last location
         locations = [] // Clear previous route (actual path)
@@ -143,20 +187,27 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         distance = 0.0 // Reset distance
         pace = 0.0 // Reset pace
         elapsedTime = 0.0 // Reset elapsed time
+        currentLocationName = "Starting..."
+        paceHistory = [] // Reset pace history
+        caloriesBurned = 0 // Reset calories
         
         // Generate unique ID for this run
         currentRunId = UUID()
         runStartTime = Date()
         
-        // Start Live Activity (iOS 16.1+)
-        if #available(iOS 16.1, *) {
-            Task { @MainActor in
-                LiveActivityManager.shared.startActivity(
-                    runId: currentRunId!,
-                    startTime: runStartTime!,
-                    destinationName: plannedDestinationName
-                )
-            }
+        // Start tracking calories from HealthKit if available
+        if let healthKit = healthKitManager, healthKit.isAuthorized {
+            // Calories will be tracked via HealthKit workout session
+            // We'll estimate based on distance and time if HealthKit isn't available
+        }
+        
+        // Start Live Activity
+        if let runId = currentRunId?.uuidString, let startTime = runStartTime {
+            liveActivityManager?.startLiveActivity(
+                runId: runId,
+                startTime: startTime,
+                locationName: currentLocationName
+            )
         }
         
         // Enable background location if possible
@@ -170,19 +221,33 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
             
             if self.distance > 0 {
                 self.pace = (Double(self.elapsedTime) / 60) / (self.distance / 1000) // Calculate pace in minutes per kilometer
+                
+                // Add to pace history (every 5 seconds to avoid too much data)
+                if Int(self.elapsedTime) % 5 == 0 && self.pace > 0 {
+                    self.paceHistory.append(self.pace)
+                    // Keep only last 20 readings
+                    if self.paceHistory.count > 20 {
+                        self.paceHistory.removeFirst()
+                    }
+                }
+            }
+            
+            // Estimate calories if not available from HealthKit
+            // Rough estimate: ~60 calories per km for average runner
+            if self.caloriesBurned == 0 && self.distance > 0 {
+                let estimatedCalories = Int((self.distance / 1000.0) * 60)
+                self.caloriesBurned = estimatedCalories
             }
             
             // Update Live Activity every second
-            if #available(iOS 16.1, *) {
-                Task { @MainActor in
-                    LiveActivityManager.shared.updateActivity(
-                        distance: self.distance,
-                        elapsedTime: self.elapsedTime,
-                        pace: self.pace,
-                        isPaused: false
-                    )
-                }
-            }
+            self.liveActivityManager?.updateLiveActivity(
+                distance: self.distance,
+                elapsedTime: self.elapsedTime,
+                pace: self.pace,
+                locationName: self.currentLocationName,
+                calories: self.caloriesBurned > 0 ? self.caloriesBurned : nil,
+                paceHistory: self.paceHistory
+            )
         }
         
         locationManager?.startUpdatingLocation() // Start updating location when the run starts
@@ -192,18 +257,6 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         locationManager?.stopUpdatingLocation() // Stop updating location when the run is paused
         timerManager.pauseTimer()
         isRunning = false
-        
-        // Update Live Activity to show paused state
-        if #available(iOS 16.1, *) {
-            Task { @MainActor in
-                LiveActivityManager.shared.updateActivity(
-                    distance: distance,
-                    elapsedTime: elapsedTime,
-                    pace: pace,
-                    isPaused: true
-                )
-            }
-        }
     }
     
     func resumeRun() {
@@ -216,47 +269,32 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
             if self.distance > 0 {
                 self.pace = (Double(self.elapsedTime) / 60) / (self.distance / 1000) // Calculate pace in minutes per kilometer
             }
-            
-            // Update Live Activity every second
-            if #available(iOS 16.1, *) {
-                Task { @MainActor in
-                    LiveActivityManager.shared.updateActivity(
-                        distance: self.distance,
-                        elapsedTime: self.elapsedTime,
-                        pace: self.pace,
-                        isPaused: false
-                    )
-                }
-            }
         }
         isRunning = true
     }
     
-    func stopRun() {
+    @MainActor func stopRun() {
         // Capture the current location as the final position before stopping updates
         if let currentLocation = locationManager?.location {
             locations.append(currentLocation)
             lastLocation = currentLocation
         }
         
+        // End Live Activity
+        liveActivityManager?.endLiveActivity()
+        
         locationManager?.stopUpdatingLocation() // Stop updating location when the run stops
         disableBackgroundLocation() // Disable background location updates
         timerManager.stopTimer()
         isRunning = false
         
-        // End Live Activity with final stats
-        if #available(iOS 16.1, *) {
-            Task { @MainActor in
-                LiveActivityManager.shared.endActivity(
-                    finalDistance: distance,
-                    finalTime: elapsedTime
-                )
-            }
-        }
-        
-        // Reset run tracking variables
-        currentRunId = nil
-        runStartTime = nil
+        // Capture values before resetting run tracking variables
+        let capturedRunStartTime = runStartTime
+        let capturedStartLocation = startLocation
+        let capturedDistance = distance
+        let capturedElapsedTime = elapsedTime
+        let capturedPace = pace
+        let capturedPlannedDestinationName = plannedDestinationName
         
         // Create a Coordinate object from the start location
         let startCoordinate = startLocation.map { Coordinate($0.coordinate, sequenceIndex: 0) }
@@ -272,26 +310,77 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         }
         let destinationCoord = plannedDestinationCoordinate.map { Coordinate($0) }
         
+        // Use captured runStartTime for the date, or current date if not available
+        let runDate = capturedRunStartTime ?? Date()
+        
+        // Reset run tracking variables
+        currentRunId = nil
+        runStartTime = nil
+        
         // Get location name using reverse geocoding
-        getLocationName(from: startLocation) { locationName in
+        getLocationName(from: capturedStartLocation) { [weak self] locationName in
+            guard let self = self else { return }
+            
             let completedRun = Run(
                 locationName: locationName,
-                date: Date(),
-                distance: self.distance,
-                duration: self.elapsedTime,
-                pace: self.pace,
+                date: runDate,
+                distance: capturedDistance,
+                duration: capturedElapsedTime,
+                pace: capturedPace > 0 ? capturedPace : 0.0, // Ensure pace is non-negative
                 startLocation: startCoordinate,
                 locations: routeCoordinates,
                 isFavorited: false,
-                destinationName: self.plannedDestinationName,
+                destinationName: capturedPlannedDestinationName,
                 destinationCoordinate: destinationCoord,
                 plannedRoute: plannedRouteCoords
             )
             
             // Only save valid runs
-            if completedRun.isValid, let context = self.modelContext {
-                context.insert(completedRun)
-                try? context.save()
+            // Check validity manually to provide better error messages
+            let isValid = capturedDistance > 0 && 
+                         capturedElapsedTime > 0 && 
+                         capturedPace >= 0 && // Allow pace to be 0 for very short runs
+                         !locationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            
+            if isValid {
+                // Save to shared data for widget
+                let sharedData = SharedRunData(
+                    distance: capturedDistance,
+                    duration: capturedElapsedTime,
+                    pace: capturedPace,
+                    locationName: locationName,
+                    date: runDate,
+                    isRunning: false
+                )
+                SharedRunData.saveRecentRun(sharedData)
+                
+                if let context = self.modelContext {
+                    // Save on main actor since ModelContext requires main thread
+                    Task { @MainActor in
+                        context.insert(completedRun)
+                        do {
+                            try context.save()
+                            print("✅ Run saved successfully: \(completedRun.id)")
+                            print("   Distance: \(completedRun.formattedDistance)")
+                            print("   Duration: \(completedRun.formattedTime)")
+                            print("   Pace: \(completedRun.formattedPace)")
+                            print("   Date: \(completedRun.formattedDate)")
+                            print("   Location: \(completedRun.locationName)")
+                        } catch {
+                            print("❌ Failed to save run: \(error.localizedDescription)")
+                            print("   Error details: \(error)")
+                        }
+                    }
+                } else {
+                    print("⚠️ ModelContext is nil - run not saved")
+                    print("   Make sure setModelContext() is called in TabView")
+                }
+            } else {
+                print("⚠️ Run is not valid - not saving")
+                print("   Distance: \(capturedDistance)m (required: > 0)")
+                print("   Duration: \(capturedElapsedTime)s (required: > 0)")
+                print("   Pace: \(capturedPace) min/km (required: >= 0)")
+                print("   LocationName: '\(locationName)' (required: non-empty)")
             }
             
             // Clear planned route data after saving
@@ -381,26 +470,41 @@ extension RunTracker {
                 if startLocation == nil {
                     startLocation = location // saves the starting location
                     lastLocation = location // saves the last location
+                    
+                    // Get location name for Live Activity
+                    self.getLocationName(from: location) { [weak self] locationName in
+                        self?.currentLocationName = locationName
+                        // Update Live Activity with initial location
+                        self?.liveActivityManager?.updateLiveActivity(
+                            distance: self?.distance ?? 0,
+                            elapsedTime: self?.elapsedTime ?? 0,
+                            pace: self?.pace ?? 0,
+                            locationName: locationName
+                        )
+                    }
                     return
                 }
                 
                 if let lastLocation {
                     distance += lastLocation.distance(from: location) // calculates the distance from the last location to the current location
-                    
-                    // Update Live Activity when distance changes
-                    if #available(iOS 16.1, *) {
-                        Task { @MainActor in
-                            LiveActivityManager.shared.updateActivity(
-                                distance: self.distance,
-                                elapsedTime: self.elapsedTime,
-                                pace: self.pace,
-                                isPaused: false
-                            )
-                        }
-                    }
                 }
                 
                 lastLocation = location // updates the last location so we can track the distance
+                
+                // Update location name periodically (every 100 meters or every 30 seconds)
+                if self.locations.count % 10 == 0 || self.elapsedTime.truncatingRemainder(dividingBy: 30) < 1 {
+                    self.getLocationName(from: location) { [weak self] locationName in
+                        guard let self = self else { return }
+                        self.currentLocationName = locationName
+                        // Update Live Activity with new location
+                        self.liveActivityManager?.updateLiveActivity(
+                            distance: self.distance,
+                            elapsedTime: self.elapsedTime,
+                            pace: self.pace,
+                            locationName: locationName
+                        )
+                    }
+                }
             }
         }
     }

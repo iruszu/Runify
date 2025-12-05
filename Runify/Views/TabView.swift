@@ -12,6 +12,7 @@ struct MainTabView: View {
     @SceneStorage("selectedTab") var selectedTab = 0 //keeps value alive as long as scene is active
     @State private var coordinator = AppCoordinator()
     @State private var runTracker = RunTracker()
+    @State private var liveActivityManager = LiveActivityManager()
     @Environment(HealthKitManager.self) private var healthKitManager
     @State private var showRunOptions = false
     @Environment(\.modelContext) private var modelContext
@@ -57,6 +58,10 @@ struct MainTabView: View {
         .onAppear {
             // Inject modelContext into RunTracker
             runTracker.setModelContext(modelContext)
+            // Inject LiveActivityManager into RunTracker
+            runTracker.setLiveActivityManager(liveActivityManager)
+            // Inject HealthKitManager into RunTracker
+            runTracker.setHealthKitManager(healthKitManager)
         }
     }
 }
