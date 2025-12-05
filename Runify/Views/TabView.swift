@@ -28,10 +28,10 @@ struct MainTabView: View {
                 HealthView()
                     .environment(healthKitManager)
             }
-            Tab("Profile", systemImage: "person.circle", value: 2) {
-                ProfileView()
-                    .environment(runTracker)
-            }
+//            Tab("Profile", systemImage: "person.circle", value: 2) {
+//                ProfileView()
+//                    .environment(runTracker)
+//            }
             Tab("Map", systemImage: "map", value: 3, role: .search) {
                 MapView()
                     .environment(coordinator)
