@@ -51,7 +51,7 @@ class AppCoordinator {
     // MARK: - Planned Route Methods
     
     /// Set planned route data when starting run to a destination
-    func setPlannedRoute(destinationName: String, coordinate: CLLocationCoordinate2D, polyline: MKPolyline) {
+    func setPlannedRoute(destinationName: String, coordinate: CLLocationCoordinate2D, polyline: MKPolyline? = nil) {
         self.plannedDestinationName = destinationName
         self.plannedDestinationCoordinate = coordinate
         self.plannedRoutePolyline = polyline

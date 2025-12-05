@@ -165,44 +165,61 @@ struct RunOptionsSheet: View {
     }
     
     private func calculateRouteAndStart(to mapItem: MKMapItem) {
-        guard let userLocation = runTracker.lastLocation else {
-            // If no user location, just start regular run
-            dismiss()
-            coordinator.navigateToCountdown()
-            return
-        }
+        // Start the run immediately - don't wait for location
+        // Location will be available when the run actually starts
+        dismiss()
+        coordinator.navigateToCountdown()
         
-        let request = MKDirections.Request()
-        request.source = MKMapItem(location: userLocation, address: nil)
-        request.destination = mapItem
-        request.transportType = .walking
+        // Set planned destination immediately (location-independent)
+        // The polyline will be calculated in the background task below
+        coordinator.setPlannedRoute(
+            destinationName: mapItem.name ?? "Unknown Location",
+            coordinate: mapItem.location.coordinate,
+            polyline: nil // Will be calculated when location is available
+        )
         
-        let directions = MKDirections(request: request)
-        
+        // Calculate route in background (non-blocking) - don't delay UI
         Task {
+            // Wait briefly for location if not immediately available
+            var userLocation = runTracker.lastLocation
+            if userLocation == nil {
+                // Wait up to 2 seconds for location to become available
+                for _ in 0..<20 {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    userLocation = runTracker.lastLocation
+                    if userLocation != nil { break }
+                }
+            }
+            
+            guard let userLocation = userLocation else {
+                // If no location, run will start without planned route
+                // Location will be tracked once available
+                return
+            }
+            
+            let request = MKDirections.Request()
+            request.source = MKMapItem(location: userLocation, address: nil)
+            request.destination = mapItem
+            request.transportType = .walking
+            
+            let directions = MKDirections(request: request)
+            
             do {
                 let response = try await directions.calculate()
                 if let route = response.routes.first {
                     await MainActor.run {
-                        // Set planned route in coordinator
+                        // Update planned route with calculated polyline
                         coordinator.setPlannedRoute(
                             destinationName: mapItem.name ?? "Unknown Location",
                             coordinate: mapItem.location.coordinate,
                             polyline: route.polyline
                         )
-                        
-                        // Dismiss and start countdown
-                        dismiss()
-                        coordinator.navigateToCountdown()
                     }
                 }
             } catch {
                 print("Route calculation error: \(error.localizedDescription)")
-                // If route calculation fails, just start regular run
-                await MainActor.run {
-                    dismiss()
-                    coordinator.navigateToCountdown()
-                }
+                // Route calculation failed, but run already started
+                // Run will continue without planned route
             }
         }
     }
