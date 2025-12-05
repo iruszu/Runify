@@ -129,7 +129,7 @@ final class Run: Hashable { //final means we can't create a subcalss from it
     var isValid: Bool {
         return distance > 0 &&
                duration > 0 &&
-               pace > 0 &&
+               pace >= 0 && // Allow pace to be 0 for very short runs
                !locationName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
         
