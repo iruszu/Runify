@@ -9,13 +9,14 @@ import Foundation
 import UIKit
 import MapKit
 import SwiftUI
+import SwiftData
 
 /// Service for generating and caching map snapshots for run cards
-@MainActor
 class MapSnapshotCache {
     static let shared = MapSnapshotCache()
     
     // NSCache for memory caching of map snapshots
+    // NSCache is thread-safe, so we can access it from any thread
     private let cache = NSCache<NSString, UIImage>()
     
     // Cache key format: "runId_mapStyle"
@@ -37,26 +38,29 @@ class MapSnapshotCache {
     }
     
     /// Get cached snapshot or generate a new one
+    /// Cache access is thread-safe (NSCache), but snapshot generation runs on background thread
     func getSnapshot(for run: Run, mapStyle: MapStyleOption, size: CGSize = CGSize(width: 300, height: 400)) async -> UIImage? {
         let key = cacheKey(for: run.id, mapStyle: mapStyle)
         
-        // Check cache first
+        // Check cache first (NSCache is thread-safe)
         if let cachedImage = cache.object(forKey: key as NSString) {
             return cachedImage
         }
         
-        // Generate new snapshot
-        guard let snapshot = await generateSnapshot(for: run, mapStyle: mapStyle, size: size) else {
-            return nil
-        }
+        // Generate snapshot on background thread to avoid blocking UI
+        let snapshot = await Task.detached(priority: .userInitiated) { [self, run, mapStyle, size] in
+            return await generateSnapshot(for: run, mapStyle: mapStyle, size: size)
+        }.value
         
-        // Store in cache
-        cache.setObject(snapshot, forKey: key as NSString)
+        // Store in cache (NSCache is thread-safe)
+        if let snapshot = snapshot {
+            cache.setObject(snapshot, forKey: key as NSString)
+        }
         
         return snapshot
     }
     
-    /// Generate a map snapshot for a run
+    /// Generate a map snapshot for a run (runs on background thread)
     private func generateSnapshot(for run: Run, mapStyle: MapStyleOption, size: CGSize) async -> UIImage? {
         guard run.startLocation != nil else {
             return nil
@@ -86,6 +90,7 @@ class MapSnapshotCache {
         
         do {
             let snapshot = try await snapshotter.start()
+            // Draw route and markers on background thread
             let image = await drawRouteAndMarkers(on: snapshot, for: run)
             return image
         } catch {
@@ -94,7 +99,7 @@ class MapSnapshotCache {
         }
     }
     
-    /// Draw route and markers on the snapshot
+    /// Draw route and markers on the snapshot (runs on background thread)
     private func drawRouteAndMarkers(on snapshot: MKMapSnapshotter.Snapshot, for run: Run) async -> UIImage {
         let image = snapshot.image
         
@@ -262,6 +267,7 @@ class MapSnapshotCache {
     }
     
     /// Clear cache for a specific run (useful when run is updated)
+    /// NSCache is thread-safe, so this can be called from any thread
     func clearCache(for runId: UUID) {
         for style in MapStyleOption.allCases {
             let key = cacheKey(for: runId, mapStyle: style)
@@ -270,6 +276,7 @@ class MapSnapshotCache {
     }
     
     /// Clear all cached snapshots
+    /// NSCache is thread-safe, so this can be called from any thread
     func clearAll() {
         cache.removeAllObjects()
     }
