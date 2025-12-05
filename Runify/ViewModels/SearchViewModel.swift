@@ -165,7 +165,20 @@ class SearchViewModel {
     // MARK: - Nearby Locations Function
     
     func loadNearbyLocations() {
-        guard let userLocation = runTracker?.lastLocation else { return }
+        // Don't block - load nearby locations when available
+        guard let userLocation = runTracker?.lastLocation else {
+            // Retry after location becomes available (non-blocking)
+            Task {
+                for _ in 0..<30 {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    if let location = runTracker?.lastLocation {
+                        await loadNearbyLocations()
+                        break
+                    }
+                }
+            }
+            return
+        }
         
         isLoadingNearby = true
         
@@ -222,7 +235,22 @@ class SearchViewModel {
     // MARK: - Recommended Routes Function
     
     func loadRecommendedRoutes() {
-        guard let userLocation = runTracker?.lastLocation else { return }
+        // Don't block - load routes when location becomes available
+        // If no location yet, try again after a short delay
+        guard let userLocation = runTracker?.lastLocation else {
+            // Retry after location becomes available (non-blocking)
+            Task {
+                // Wait up to 3 seconds for location
+                for _ in 0..<30 {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    if let location = runTracker?.lastLocation {
+                        await loadRecommendedRoutes()
+                        break
+                    }
+                }
+            }
+            return
+        }
         
         isLoadingRecommended = true
         
@@ -285,7 +313,20 @@ class SearchViewModel {
     // MARK: - Distance-Filtered Routes Function
     
     func loadDistanceFilteredRoutes() {
-        guard let userLocation = runTracker?.lastLocation else { return }
+        // Don't block - load routes when location becomes available
+        guard let userLocation = runTracker?.lastLocation else {
+            // Retry after location becomes available (non-blocking)
+            Task {
+                for _ in 0..<30 {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                    if let location = runTracker?.lastLocation {
+                        await loadDistanceFilteredRoutes()
+                        break
+                    }
+                }
+            }
+            return
+        }
         
         isLoadingDistanceFiltered = true
         
