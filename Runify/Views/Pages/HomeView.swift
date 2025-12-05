@@ -90,18 +90,18 @@ struct HomeView: View {
                                     
            
                                 }
-                                
-                                // Modern button with better styling
-                                StartRunButton {
-                                    showRunOptions = true
-                                }
-                                .padding(.top, 8)
                             }
                             .padding(.horizontal, 32)
                             .padding(.vertical, 48)
                             .frame(maxWidth: .infinity)
                             
                             Spacer()
+                            
+                            // Start Run Button at the bottom
+                            StartRunButton {
+                                showRunOptions = true
+                            }
+                            .padding(.bottom, 50)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onAppear {
