@@ -9,7 +9,8 @@ import Foundation
 
 /// Shared data structure for passing run data between main app and widget extension
 /// NOTE: This must match the SharedRunData in RunifyWidget/SharedRunData.swift
-struct SharedRunData: Codable {
+struct SharedRunData: Codable, Identifiable {
+    var id: Date { date }
     var distance: Double // in meters
     var duration: TimeInterval // in seconds
     var pace: Double // min/km
@@ -44,6 +45,41 @@ struct SharedRunData: Codable {
             return nil
         }
         return run
+    }
+    
+    /// Save multiple recent runs (up to 5 most recent)
+    static func saveRecentRuns(_ runs: [SharedRunData]) {
+        guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier) else {
+            print("⚠️ Failed to access App Group UserDefaults")
+            return
+        }
+        
+        // Keep only the 5 most recent runs
+        let recentRuns = Array(runs.sorted { $0.date > $1.date }.prefix(5))
+        
+        if let encoded = try? JSONEncoder().encode(recentRuns) {
+            sharedDefaults.set(encoded, forKey: "recentRuns")
+            sharedDefaults.synchronize()
+        }
+        
+        // Also save the most recent one for backward compatibility
+        if let mostRecent = recentRuns.first {
+            saveRecentRun(mostRecent)
+        }
+    }
+    
+    /// Load multiple recent runs from shared UserDefaults
+    static func loadRecentRuns() -> [SharedRunData] {
+        guard let sharedDefaults = UserDefaults(suiteName: appGroupIdentifier),
+              let data = sharedDefaults.data(forKey: "recentRuns"),
+              let runs = try? JSONDecoder().decode([SharedRunData].self, from: data) else {
+            // Fallback to single run for backward compatibility
+            if let singleRun = loadRecentRun() {
+                return [singleRun]
+            }
+            return []
+        }
+        return runs.sorted { $0.date > $1.date }
     }
     
     /// Save active run data

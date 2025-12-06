@@ -10,22 +10,25 @@ import SwiftUI
 
 struct Provider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> SimpleEntry {
-        SimpleEntry(
+        let sampleRun = SharedRunData(
+            distance: 5000,
+            duration: 1800,
+            pace: 6.0,
+            locationName: "Central Park",
+            date: Date(),
+            isRunning: false
+        )
+        return SimpleEntry(
             date: Date(),
             configuration: ConfigurationAppIntent(),
-            runData: SharedRunData(
-                distance: 5000,
-                duration: 1800,
-                pace: 6.0,
-                locationName: "Central Park",
-                date: Date(),
-                isRunning: false
-            )
+            runData: sampleRun,
+            runs: [sampleRun]
         )
     }
 
     func snapshot(for configuration: ConfigurationAppIntent, in context: Context) async -> SimpleEntry {
-        let runData = SharedRunData.loadRecentRun() ?? SharedRunData(
+        let runs = SharedRunData.loadRecentRuns()
+        let runData = runs.first ?? SharedRunData(
             distance: 0,
             duration: 0,
             pace: 0,
@@ -33,12 +36,13 @@ struct Provider: AppIntentTimelineProvider {
             date: Date(),
             isRunning: false
         )
-        return SimpleEntry(date: Date(), configuration: configuration, runData: runData)
+        return SimpleEntry(date: Date(), configuration: configuration, runData: runData, runs: runs)
     }
     
     func timeline(for configuration: ConfigurationAppIntent, in context: Context) async -> Timeline<SimpleEntry> {
         let currentDate = Date()
-        let runData = SharedRunData.loadRecentRun() ?? SharedRunData(
+        let runs = SharedRunData.loadRecentRuns()
+        let runData = runs.first ?? SharedRunData(
             distance: 0,
             duration: 0,
             pace: 0,
@@ -47,7 +51,7 @@ struct Provider: AppIntentTimelineProvider {
             isRunning: false
         )
         
-        let entry = SimpleEntry(date: currentDate, configuration: configuration, runData: runData)
+        let entry = SimpleEntry(date: currentDate, configuration: configuration, runData: runData, runs: runs)
         
         // Update every 15 minutes
         let nextUpdate = Calendar.current.date(byAdding: .minute, value: 15, to: currentDate)!
@@ -60,10 +64,12 @@ struct SimpleEntry: TimelineEntry {
     let date: Date
     let configuration: ConfigurationAppIntent
     let runData: SharedRunData
+    let runs: [SharedRunData]
 }
 
 struct RunifyWidgetEntryView : View {
     var entry: Provider.Entry
+    @Environment(\.widgetFamily) var widgetFamily
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -80,56 +86,9 @@ struct RunifyWidgetEntryView : View {
             
             Divider()
             
-            // Run Data
-            if entry.runData.distance > 0 {
-                VStack(alignment: .leading, spacing: 6) {
-                    // Location
-                    HStack {
-                        Image(systemName: "location.fill")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Text(entry.runData.locationName)
-                            .font(.subheadline)
-                            .lineLimit(1)
-                    }
-                    
-                    // Distance
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Text(entry.runData.formattedDistance)
-                            .font(.title2)
-                            .fontWeight(.bold)
-                        Text("distance")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    // Time and Pace
-                    HStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Time")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text(entry.runData.formattedTime)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Pace")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            Text(entry.runData.formattedPace)
-                                .font(.subheadline)
-                                .fontWeight(.medium)
-                        }
-                    }
-                    
-                    // Date
-                    Text(entry.runData.date, style: .relative)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-            } else {
+            // Display runs based on widget family
+            if entry.runs.isEmpty || (entry.runs.count == 1 && entry.runs[0].distance == 0) {
+                // Empty state
                 VStack(spacing: 8) {
                     Image(systemName: "figure.run.circle")
                         .font(.system(size: 40))
@@ -142,9 +101,84 @@ struct RunifyWidgetEntryView : View {
                         .foregroundColor(.secondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Show runs list
+                if widgetFamily == .systemSmall {
+                    // Small widget - show most recent run
+                    RunRowView(run: entry.runs[0])
+                } else {
+                    // Medium/Large widget - show multiple runs
+                    let maxRuns = widgetFamily == .systemMedium ? 3 : 5
+                    let displayedRuns = Array(entry.runs.prefix(maxRuns))
+                    VStack(alignment: .leading, spacing: 8) {
+                        ForEach(Array(displayedRuns.enumerated()), id: \.element.id) { index, run in
+                            RunRowView(run: run)
+                            if index < displayedRuns.count - 1 {
+                                Divider()
+                            }
+                        }
+                    }
+                }
             }
         }
         .padding()
+    }
+}
+
+struct RunRowView: View {
+    let run: SharedRunData
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Location
+            HStack {
+                Image(systemName: "location.fill")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Text(run.locationName)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .lineLimit(1)
+                Spacer()
+            }
+            
+            // Stats row
+            HStack(spacing: 12) {
+                // Distance
+                HStack(alignment: .firstTextBaseline, spacing: 2) {
+                    Text(run.formattedDistance)
+                        .font(.title3)
+                        .fontWeight(.bold)
+                }
+                
+                Spacer()
+                
+                // Time
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("Time")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Text(run.formattedTime)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+                
+                // Pace
+                VStack(alignment: .trailing, spacing: 1) {
+                    Text("Pace")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                    Text(run.formattedPace)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                }
+            }
+            
+            // Date
+            Text(run.date, style: .relative)
+                .font(.caption2)
+                .foregroundColor(.secondary)
+        }
     }
 }
 
@@ -156,6 +190,7 @@ struct RunifyWidget: Widget {
             RunifyWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -168,17 +203,27 @@ extension ConfigurationAppIntent {
 #Preview(as: .systemSmall) {
     RunifyWidget()
 } timeline: {
+    let run1 = SharedRunData(
+        distance: 5000,
+        duration: 1800,
+        pace: 6.0,
+        locationName: "Central Park",
+        date: Date(),
+        isRunning: false
+    )
+    let run2 = SharedRunData(
+        distance: 3200,
+        duration: 1200,
+        pace: 6.25,
+        locationName: "Riverside Trail",
+        date: Date().addingTimeInterval(-86400),
+        isRunning: false
+    )
     SimpleEntry(
         date: .now,
         configuration: .defaultConfig,
-        runData: SharedRunData(
-            distance: 5000,
-            duration: 1800,
-            pace: 6.0,
-            locationName: "Central Park",
-            date: Date(),
-            isRunning: false
-        )
+        runData: run1,
+        runs: [run1, run2]
     )
     SimpleEntry(
         date: .now,
@@ -190,6 +235,7 @@ extension ConfigurationAppIntent {
             locationName: "No runs yet",
             date: Date(),
             isRunning: false
-        )
+        ),
+        runs: []
     )
 }

@@ -41,7 +41,8 @@ struct HomeView: View {
             }
             .mapStyle(.hybrid(elevation: .realistic))
             .disabled(true) // Make it non-interactive
-            .ignoresSafeArea()
+            .ignoresSafeArea(edges: [.top, .leading, .trailing])
+            .safeAreaPadding(.bottom, 20) // Preserve space for Apple Maps logo
             
             // Subtle gradient overlay for content readability
             LinearGradient(
@@ -54,7 +55,7 @@ struct HomeView: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea()
+            .ignoresSafeArea(edges: [.top, .leading, .trailing])
             
             // Main content
             ScrollView(.vertical, showsIndicators: false) {

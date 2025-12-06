@@ -50,11 +50,13 @@ struct MapView: View {
     // MARK: - Methods
     
     private func handleRunSelection(_ run: Run) {
-
-            selectedRun = run
-            showRouteOnMap = true
-            showRunDetailSheet = true
+        selectedRun = run
+        showRouteOnMap = true
+        showRunDetailSheet = true
         
+        // Center the map on the selected run's route
+        let region = MapRegionCalculator.calculateBoundingRegion(for: run)
+        runTracker.staticRegion = .region(region)
     }
     
     
@@ -82,6 +84,10 @@ struct MapView: View {
                 .onChange(of: selectedRun) { oldValue, newValue in
                     if let run = newValue {
                         handleRunSelection(run)
+                    } else {
+                        // Clear route when run is deselected
+                        showRouteOnMap = false
+                        showRunDetailSheet = false
                     }
                 }
                 .mapStyle(runTracker.mapStyle)

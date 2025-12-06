@@ -366,6 +366,22 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
                             print("   Pace: \(completedRun.formattedPace)")
                             print("   Date: \(completedRun.formattedDate)")
                             print("   Location: \(completedRun.locationName)")
+                            
+                            // Update widget with all runs
+                            let descriptor = FetchDescriptor<Run>(sortBy: [SortDescriptor(\.date, order: .reverse)])
+                            if let allRuns = try? context.fetch(descriptor) {
+                                let sharedRuns = allRuns.map { run in
+                                    SharedRunData(
+                                        distance: run.distance,
+                                        duration: run.duration,
+                                        pace: run.pace,
+                                        locationName: run.locationName,
+                                        date: run.date,
+                                        isRunning: false
+                                    )
+                                }
+                                SharedRunData.saveRecentRuns(sharedRuns)
+                            }
                         } catch {
                             print("❌ Failed to save run: \(error.localizedDescription)")
                             print("   Error details: \(error)")

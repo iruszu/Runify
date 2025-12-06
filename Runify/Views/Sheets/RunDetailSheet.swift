@@ -18,6 +18,54 @@ struct RunDetailSheet: View {
         MapRegionCalculator.calculateBoundingRegion(for: run)
     }
     
+    // Computed properties for map content
+    private var sortedLocations: [Coordinate] {
+        run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
+    }
+    
+    private var routePolyline: MKPolyline? {
+        guard !sortedLocations.isEmpty else { return nil }
+        let coordinates = sortedLocations.map { $0.clCoordinate }
+        return MKPolyline(coordinates: coordinates, count: coordinates.count)
+    }
+    
+    private var lastLocation: Coordinate? {
+        sortedLocations.last
+    }
+    
+    // Map view with route and markers
+    private var mapView: some View {
+        Map(position: .constant(.region(mapRegion))) {
+            // Show the run route
+            if let polyline = routePolyline {
+                MapPolyline(polyline)
+                    .stroke(.blue, lineWidth: 4)
+            }
+            
+            // Start marker
+            if let startLocation = run.startLocation {
+                Annotation("Start", coordinate: startLocation.clCoordinate) {
+                    Image(systemName: "play.circle.fill")
+                        .foregroundColor(.green)
+                        .font(.title2)
+                        .background(.white)
+                        .clipShape(Circle())
+                }
+            }
+            
+            // End marker
+            if let lastLocation = lastLocation {
+                Annotation("Finish", coordinate: lastLocation.clCoordinate) {
+                    Image(systemName: "flag.checkered")
+                        .foregroundColor(.red)
+                        .font(.title2)
+                        .background(.white)
+                        .clipShape(Circle())
+                }
+            }
+        }
+    }
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -28,50 +76,15 @@ struct RunDetailSheet: View {
                             .font(.headline)
                             .padding(.horizontal)
                         
-                        Map(position: .constant(.region(mapRegion))) {
-                            // Show the run route
-                            if !run.locations.isEmpty {
-                                // Sort by sequence index to ensure correct order
-                                let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
-                                let coordinates = sortedLocations.map { $0.clCoordinate }
-                                let polyline = MKPolyline(coordinates: coordinates, count: coordinates.count)
-                                MapPolyline(polyline)
-                                    .stroke(.blue, lineWidth: 4)
-                            }
-                            
-                            // Start marker
-                            if let startLocation = run.startLocation {
-                                Annotation("Start", coordinate: startLocation.clCoordinate) {
-                                    Image(systemName: "play.circle.fill")
-                                        .foregroundColor(.green)
-                                        .font(.title2)
-                                        .background(.white)
-                                        .clipShape(Circle())
-                                }
-                            }
-                            
-                            // End marker (last location in sorted sequence)
-                            if !run.locations.isEmpty {
-                                let sortedLocations = run.locations.sorted { $0.sequenceIndex < $1.sequenceIndex }
-                                if let lastLocation = sortedLocations.last {
-                                    Annotation("Finish", coordinate: lastLocation.clCoordinate) {
-                                        Image(systemName: "flag.checkered")
-                                            .foregroundColor(.red)
-                                            .font(.title2)
-                                            .background(.white)
-                                            .clipShape(Circle())
-                                    }
-                                }
-                            }
-
-                                }
-                            }
-                        }
-                        .mapStyle(runTracker.mapStyle)
-                        .frame(height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .padding(.horizontal, 20)
-
+                        mapView
+                            .mapStyle(runTracker.mapStyle)
+                            .frame(height: 200)
+                            .mask(RoundedRectangle(cornerRadius: 12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color(.systemGray4), lineWidth: 0.5)
+                            )
+                            .padding(.horizontal, 20)
                     }
                     
                     VStack(alignment: .leading, spacing: 12) {
@@ -92,11 +105,9 @@ struct RunDetailSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .navigationTitle(run.locationName)
             }
-
-
         }
-
-
+    }
+}
 
 // MARK: - Supporting Views
 
