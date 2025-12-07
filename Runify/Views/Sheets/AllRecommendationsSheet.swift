@@ -199,32 +199,42 @@ struct AllRecommendationsSheet: View {
             )
             
             // Load all POI types in parallel using async let for better performance
-            async let parksTask = loadPOIType(.park, into: \.parks, region: region, userLocation: userLocation)
-            async let beachesTask = loadPOIType(.beach, into: \.beaches, region: region, userLocation: userLocation)
-            async let nationalParksTask = loadPOIType(.nationalPark, into: \.nationalParks, region: region, userLocation: userLocation)
-            async let campgroundsTask = loadPOIType(.campground, into: \.campgrounds, region: region, userLocation: userLocation)
-            async let waterfrontTask = loadMultiplePOITypes([.marina, .aquarium], into: \.waterfront, region: region, userLocation: userLocation)
-            async let landmarksTask = loadMultiplePOITypes([.museum, .library, .stadium, .zoo], into: \.landmarks, region: region, userLocation: userLocation)
-            async let universitiesTask = loadPOIType(.university, into: \.universities, region: region, userLocation: userLocation)
-            async let popularDestinationsTask = loadMultiplePOITypes([.restaurant, .cafe, .store, .movieTheater], into: \.popularDestinations, region: region, userLocation: userLocation)
+            async let parksResult = loadPOIType(.park, region: region, userLocation: userLocation)
+            async let beachesResult = loadPOIType(.beach, region: region, userLocation: userLocation)
+            async let nationalParksResult = loadPOIType(.nationalPark, region: region, userLocation: userLocation)
+            async let campgroundsResult = loadPOIType(.campground, region: region, userLocation: userLocation)
+            async let waterfrontResult = loadMultiplePOITypes([.marina, .aquarium], region: region, userLocation: userLocation)
+            async let landmarksResult = loadMultiplePOITypes([.museum, .library, .stadium, .zoo], region: region, userLocation: userLocation)
+            async let universitiesResult = loadPOIType(.university, region: region, userLocation: userLocation)
+            async let popularDestinationsResult = loadMultiplePOITypes([.restaurant, .cafe, .store, .movieTheater], region: region, userLocation: userLocation)
             
-            // Wait for all tasks to complete (they run in parallel)
-            await parksTask
-            await beachesTask
-            await nationalParksTask
-            await campgroundsTask
-            await waterfrontTask
-            await landmarksTask
-            await universitiesTask
-            await popularDestinationsTask
+            // Wait for all tasks to complete and update state on main actor
+            let (parksItems, beachesItems, nationalParksItems, campgroundsItems, waterfrontItems, landmarksItems, universitiesItems, popularDestinationsItems) = await (
+                parksResult,
+                beachesResult,
+                nationalParksResult,
+                campgroundsResult,
+                waterfrontResult,
+                landmarksResult,
+                universitiesResult,
+                popularDestinationsResult
+            )
             
             await MainActor.run {
-                isLoading = false
+                self.parks = parksItems
+                self.beaches = beachesItems
+                self.nationalParks = nationalParksItems
+                self.campgrounds = campgroundsItems
+                self.waterfront = waterfrontItems
+                self.landmarks = landmarksItems
+                self.universities = universitiesItems
+                self.popularDestinations = popularDestinationsItems
+                self.isLoading = false
             }
         }
     }
     
-    private func loadPOIType(_ category: MKPointOfInterestCategory, into keyPath: ReferenceWritableKeyPath<AllRecommendationsSheet, [MKMapItem]>, region: MKCoordinateRegion, userLocation: CLLocation) async {
+    private func loadPOIType(_ category: MKPointOfInterestCategory, region: MKCoordinateRegion, userLocation: CLLocation) async -> [MKMapItem] {
         let request = MKLocalPointsOfInterestRequest(coordinateRegion: region)
         request.pointOfInterestFilter = MKPointOfInterestFilter(including: [category])
         
@@ -240,15 +250,14 @@ struct AllRecommendationsSheet: View {
                 }
             }.value
             
-            await MainActor.run {
-                self[keyPath: keyPath] = sorted
-            }
+            return sorted
         } catch {
             print("POI search error for \(category): \(error.localizedDescription)")
+            return []
         }
     }
     
-    private func loadMultiplePOITypes(_ categories: [MKPointOfInterestCategory], into keyPath: ReferenceWritableKeyPath<AllRecommendationsSheet, [MKMapItem]>, region: MKCoordinateRegion, userLocation: CLLocation) async {
+    private func loadMultiplePOITypes(_ categories: [MKPointOfInterestCategory], region: MKCoordinateRegion, userLocation: CLLocation) async -> [MKMapItem] {
         let request = MKLocalPointsOfInterestRequest(coordinateRegion: region)
         request.pointOfInterestFilter = MKPointOfInterestFilter(including: categories)
         
@@ -264,11 +273,10 @@ struct AllRecommendationsSheet: View {
                 }
             }.value
             
-            await MainActor.run {
-                self[keyPath: keyPath] = sorted
-            }
+            return sorted
         } catch {
             print("POI search error for multiple categories: \(error.localizedDescription)")
+            return []
         }
     }
 }

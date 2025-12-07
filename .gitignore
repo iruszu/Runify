@@ -94,5 +94,5 @@ iOSInjectionProject/
 # Runify/Config/APIKeys.plist
 # Runify/Config/Secrets.plist
 
-# Info.plist - ignore to prevent conflicts
-Runify/Info.plist
+# Info.plist - now tracked in git
+# Runify/Info.plist

@@ -28,6 +28,9 @@ class TimerManager {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { _ in
             action() //increments counter by 1
         }
+        
+        // Add timer to run loop to ensure it fires (important for tests)
+        RunLoop.current.add(timer!, forMode: .common)
     }
     
     func pauseTimer() {
@@ -53,6 +56,9 @@ class TimerManager {
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: repeats) { _ in
             action() //decrements counter by 1
         }
+        
+        // Add timer to run loop to ensure it fires (important for tests)
+        RunLoop.current.add(timer!, forMode: .common)
     }
     
     func stopTimer() {
