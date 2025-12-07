@@ -2,11 +2,13 @@
 
 # Runify
 
+<img width="1867" height="1601" alt="Group 2" src="https://github.com/user-attachments/assets/173220fb-53b8-4b98-aa14-571b1012d85e" />
+
 A native iOS running tracker built with SwiftUI. Tracks GPS routes, integrates
 with HealthKit, and provides real-time updates via Live Activities and Dynamic
 Island.
 
-![Runify Screenshots](screenshots.png)
+<img width="1703" height="1265" alt="Group 3" src="https://github.com/user-attachments/assets/ad590114-e320-4ed7-b2b7-3aeefbb6e545" />
 
 ## Technical Stack
 
