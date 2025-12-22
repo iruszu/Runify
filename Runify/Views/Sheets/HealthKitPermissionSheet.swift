@@ -80,11 +80,10 @@ struct HealthKitPermissionSheet: View {
                         dismiss()
                         
                         // Wait for sheet to dismiss before calling onAuthorize
-                        if success {
-                            Task { @MainActor in
-                                try? await Task.sleep(nanoseconds: 400_000_000) // 0.4 seconds
-                                onAuthorize()
-                            }
+                        // Proceed with run regardless of authorization result
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 400_000_000) // 0.4 seconds
+                            onAuthorize()
                         }
                     }
                 }) {

@@ -55,14 +55,37 @@
 		ABDEB7882E9CB51000BDE26C /* HealthKitUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKitUI.framework; path = System/Library/Frameworks/HealthKitUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		ABEE608E2EF64069007A7E9E /* Exceptions for "RunifyWidget" folder in "RunifyWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = AB62AA222EE396AE0013D599 /* RunifyWidgetExtension */;
+		};
+		ABEE608F2EF6415A007A7E9E /* Exceptions for "Runify" folder in "Runify" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = ABA9E1512E53F72000138E08 /* Runify */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AB62AA262EE396AE0013D599 /* RunifyWidget */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				ABEE608E2EF64069007A7E9E /* Exceptions for "RunifyWidget" folder in "RunifyWidgetExtension" target */,
+			);
 			path = RunifyWidget;
 			sourceTree = "<group>";
 		};
 		ABA9E1542E53F72000138E08 /* Runify */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				ABEE608F2EF6415A007A7E9E /* Exceptions for "Runify" folder in "Runify" target */,
+			);
 			path = Runify;
 			sourceTree = "<group>";
 		};
@@ -512,7 +535,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
@@ -557,7 +580,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JH5HRRGFQZ;
 				ENABLE_PREVIEWS = YES;
-				GENERATE_INFOPLIST_FILE = NO;
+				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Runify/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Runify;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
