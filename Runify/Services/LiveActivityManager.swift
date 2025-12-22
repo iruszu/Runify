@@ -128,35 +128,44 @@ class LiveActivityManager: ObservableObject {
     
     /// End the Live Activity
     func endLiveActivity() {
-        guard let activity = currentActivity else { return }
-        
-        // Get final state from current activity
-        let finalState = RunifyWidgetAttributes.ContentState(
-            distance: activity.content.state.distance,
-            elapsedTime: activity.content.state.elapsedTime,
-            pace: activity.content.state.pace,
-            locationName: activity.content.state.locationName,
-            calories: activity.content.state.calories,
-            paceHistory: activity.content.state.paceHistory
-        )
-        
-        Task {
-            await activity.end(
-                .init(state: finalState, staleDate: nil),
-                dismissalPolicy: .after(.now.addingTimeInterval(5))
-            )
-        }
-        
-        // Stop update timer
+        // Stop update timer first
         stopUpdateTimer()
         
-        // Clear active run data
+        // Clear active run data immediately
         SharedRunData.clearActiveRun()
         
-        // Clear current activity
+        // End all running activities (in case currentActivity reference is lost)
+        Task {
+            // Get all running activities for this app
+            let runningActivities = Activity<RunifyWidgetAttributes>.activities
+            
+            for activity in runningActivities {
+                // Get final state from activity
+                let finalState = RunifyWidgetAttributes.ContentState(
+                    distance: activity.content.state.distance,
+                    elapsedTime: activity.content.state.elapsedTime,
+                    pace: activity.content.state.pace,
+                    locationName: activity.content.state.locationName,
+                    calories: activity.content.state.calories,
+                    paceHistory: activity.content.state.paceHistory
+                )
+                
+                // End with immediate dismissal
+                await activity.end(
+                    .init(state: finalState, staleDate: nil),
+                    dismissalPolicy: .immediate
+                )
+                print("✅ Ended Live Activity: \(activity.attributes.runId)")
+            }
+            
+            // Force widget refresh to update Control Center widget and other widgets
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+        
+        // Clear current activity reference
         currentActivity = nil
         
-        print("✅ Live Activity ended")
+        print("✅ Live Activity cleanup completed")
     }
     
     /// Start a timer to periodically update the Live Activity
