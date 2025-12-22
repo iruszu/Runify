@@ -8,6 +8,7 @@
 import Testing
 import Foundation
 import MapKit
+import ActivityKit
 @testable import Runify
 
 // MARK: - Run Model Tests
@@ -675,5 +676,151 @@ struct MapStyleOptionTests {
         #expect(allCases.contains(.standard))
         #expect(allCases.contains(.imagery))
         #expect(allCases.contains(.hybrid))
+    }
+}
+
+// MARK: - Live Activity Integration Tests
+
+struct LiveActivityIntegrationTests {
+    
+    /// Integration test: Ensures Live Activities (Dynamic Island and Lock Screen) 
+    /// end when a run is not active
+    /// 
+    /// This test verifies the critical bug fix where Live Activities would persist
+    /// after a run ended, causing confusion and battery drain.
+    @Test("Live Activities end when run is not active")
+    func testLiveActivitiesEndWhenRunNotActive() async throws {
+        await MainActor.run {
+            // Arrange: Set up components
+            let runTracker = RunTracker()
+            let liveActivityManager = LiveActivityManager()
+            
+            // Connect components
+            runTracker.setLiveActivityManager(liveActivityManager)
+            
+            // Verify initial state - no run active, no Live Activity
+            #expect(runTracker.isRunning == false, "RunTracker should not be running initially")
+            #expect(liveActivityManager.currentActivity == nil, "No Live Activity should exist initially")
+            
+            // Act: Start a run (this should start Live Activity)
+            runTracker.startRun()
+            
+            // Verify run is active
+            #expect(runTracker.isRunning == true, "RunTracker should be running after startRun()")
+            
+            // Note: In test environment, Live Activities may not actually start due to
+            // ActivityKit restrictions, but we can verify the manager is set up correctly
+            // The currentActivity might be nil in tests, but the state should be correct
+            
+            // Act: Stop the run (this should end Live Activity)
+            runTracker.stopRun()
+            
+            // Assert: Verify run is not active
+            #expect(runTracker.isRunning == false, "RunTracker should not be running after stopRun()")
+            
+            // Assert: Verify Live Activity is ended
+            #expect(liveActivityManager.currentActivity == nil, 
+                   "Live Activity should be nil after run stops")
+            
+            // Assert: Verify no activities remain active
+            // This checks the actual ActivityKit system for any remaining activities
+            // In a real scenario, this would catch the bug where activities persist
+            let remainingActivities = Activity<RunifyWidgetAttributes>.activities
+            #expect(remainingActivities.isEmpty, 
+                   "No Live Activities should remain when run is not active. Found: \(remainingActivities.count)")
+        }
+    }
+    
+    /// Integration test: Verifies Live Activity cleanup happens even if 
+    /// currentActivity reference is lost
+    @Test("Live Activities cleanup when reference is lost")
+    func testLiveActivityCleanupWhenReferenceLost() async throws {
+        await MainActor.run {
+            let runTracker = RunTracker()
+            let liveActivityManager = LiveActivityManager()
+            
+            runTracker.setLiveActivityManager(liveActivityManager)
+            
+            // Start a run
+            runTracker.startRun()
+            #expect(runTracker.isRunning == true)
+            
+            // Simulate reference loss by clearing it manually
+            // (This simulates the bug scenario where currentActivity becomes nil
+            // but the actual Activity still exists in the system)
+            liveActivityManager.currentActivity = nil
+            
+            // Stop the run - endLiveActivity should still clean up all activities
+            runTracker.stopRun()
+            
+            // Verify run is stopped
+            #expect(runTracker.isRunning == false)
+            
+            // Verify all activities are cleaned up
+            // The endLiveActivity() method should check Activity.activities
+            // and end all of them, even if currentActivity is nil
+            let remainingActivities = Activity<RunifyWidgetAttributes>.activities
+            #expect(remainingActivities.isEmpty,
+                   "All Live Activities should be cleaned up even if reference is lost. Found: \(remainingActivities.count)")
+        }
+    }
+    
+    /// Integration test: Verifies SharedRunData is cleared when run ends
+    /// This ensures widgets don't show stale data
+    @Test("SharedRunData cleared when run ends")
+    func testSharedRunDataClearedWhenRunEnds() async throws {
+        await MainActor.run {
+            let runTracker = RunTracker()
+            let liveActivityManager = LiveActivityManager()
+            
+            runTracker.setLiveActivityManager(liveActivityManager)
+            
+            // Start a run
+            runTracker.startRun()
+            #expect(runTracker.isRunning == true)
+            
+            // Verify active run data exists (if Live Activity started)
+            // Note: In test environment, this might not be set if ActivityKit is unavailable
+            
+            // Stop the run
+            runTracker.stopRun()
+            #expect(runTracker.isRunning == false)
+            
+            // Verify active run data is cleared
+            let activeRun = SharedRunData.loadActiveRun()
+            #expect(activeRun == nil || activeRun?.isRunning == false,
+                   "Active run data should be cleared or marked as not running when run ends")
+        }
+    }
+    
+    /// Integration test: Verifies Live Activity updates stop when run is paused
+    @Test("Live Activity updates stop when run is paused")
+    func testLiveActivityUpdatesStopWhenPaused() async throws {
+        await MainActor.run {
+            let runTracker = RunTracker()
+            let liveActivityManager = LiveActivityManager()
+            
+            runTracker.setLiveActivityManager(liveActivityManager)
+            
+            // Start a run
+            runTracker.startRun()
+            #expect(runTracker.isRunning == true)
+            
+            // Pause the run
+            runTracker.pauseRun()
+            #expect(runTracker.isRunning == false, "Run should be paused (isRunning = false)")
+            
+            // Note: Live Activity might still exist but shouldn't be updating
+            // The actual Activity might persist, but updates should stop
+            
+            // Stop the run completely
+            runTracker.stopRun()
+            
+            // Verify everything is cleaned up
+            #expect(liveActivityManager.currentActivity == nil)
+            let remainingActivities = Activity<RunifyWidgetAttributes>.activities
+            #expect(remainingActivities.isEmpty,
+                   "All Live Activities should be cleaned up after run stops")
+        }
     }
 }

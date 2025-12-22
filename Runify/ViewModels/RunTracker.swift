@@ -84,6 +84,7 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
     private var healthKitManager: HealthKitManager?
     private var paceHistory: [Double] = [] // Track pace history for chart
     private var caloriesBurned: Int = 0 // Track calories during run
+    private var currentHeartRate: Int? = nil // Track current heart rate
     
     func setLiveActivityManager(_ manager: LiveActivityManager) {
         self.liveActivityManager = manager
@@ -190,15 +191,17 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
         currentLocationName = "Starting..."
         paceHistory = [] // Reset pace history
         caloriesBurned = 0 // Reset calories
+        currentHeartRate = nil // Reset heart rate
         
         // Generate unique ID for this run
         currentRunId = UUID()
         runStartTime = Date()
         
-        // Start tracking calories from HealthKit if available
+        // Start tracking HealthKit data if available
         if let healthKit = healthKitManager, healthKit.isAuthorized {
             // Calories will be tracked via HealthKit workout session
             // We'll estimate based on distance and time if HealthKit isn't available
+            // Heart rate will be fetched periodically during the run
         }
         
         // Start Live Activity
@@ -239,6 +242,15 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
                 self.caloriesBurned = estimatedCalories
             }
             
+            // Fetch heart rate every 5 seconds (to avoid too many queries)
+            if Int(self.elapsedTime) % 5 == 0, let healthKit = self.healthKitManager, healthKit.isAuthorized {
+                healthKit.fetchCurrentHeartRate { heartRate in
+                    Task { @MainActor in
+                        self.currentHeartRate = heartRate
+                    }
+                }
+            }
+            
             // Update Live Activity every second
             self.liveActivityManager?.updateLiveActivity(
                 distance: self.distance,
@@ -246,7 +258,10 @@ class RunTracker: NSObject, CLLocationManagerDelegate {
                 pace: self.pace,
                 locationName: self.currentLocationName,
                 calories: self.caloriesBurned > 0 ? self.caloriesBurned : nil,
-                paceHistory: self.paceHistory
+                heartRate: self.currentHeartRate,
+                paceHistory: self.paceHistory,
+                distanceToDestination: self.distanceToDestination(),
+                totalRouteDistance: self.totalRouteDistance()
             )
         }
         
@@ -579,6 +594,24 @@ extension RunTracker {
         
         let destinationLocation = CLLocation(latitude: destination.latitude, longitude: destination.longitude)
         return lastLocation.distance(from: destinationLocation)
+    }
+    
+    /// Calculate total distance of planned route
+    func totalRouteDistance() -> Double? {
+        guard !plannedRouteCoordinates.isEmpty else {
+            return nil
+        }
+        
+        var totalDistance: Double = 0.0
+        for i in 0..<plannedRouteCoordinates.count - 1 {
+            let coord1 = plannedRouteCoordinates[i]
+            let coord2 = plannedRouteCoordinates[i + 1]
+            let location1 = CLLocation(latitude: coord1.latitude, longitude: coord1.longitude)
+            let location2 = CLLocation(latitude: coord2.latitude, longitude: coord2.longitude)
+            totalDistance += location1.distance(from: location2)
+        }
+        
+        return totalDistance > 0 ? totalDistance : nil
     }
 
 }

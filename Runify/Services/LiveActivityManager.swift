@@ -17,7 +17,10 @@ struct RunifyWidgetAttributes: ActivityAttributes {
         var pace: Double // min/km
         var locationName: String
         var calories: Int? // calories burned (optional)
+        var heartRate: Int? // current heart rate in BPM (optional)
         var paceHistory: [Double] // Last 20 pace readings for chart
+        var distanceToDestination: Double? // Distance remaining to destination (in meters)
+        var totalRouteDistance: Double? // Total distance of planned route (in meters)
     }
     
     var runId: String
@@ -53,7 +56,10 @@ class LiveActivityManager: ObservableObject {
             pace: 0,
             locationName: locationName,
             calories: nil,
-            paceHistory: []
+            heartRate: nil,
+            paceHistory: [],
+            distanceToDestination: nil,
+            totalRouteDistance: nil
         )
         
         do {
@@ -80,7 +86,10 @@ class LiveActivityManager: ObservableObject {
         pace: Double,
         locationName: String,
         calories: Int? = nil,
-        paceHistory: [Double] = []
+        heartRate: Int? = nil,
+        paceHistory: [Double] = [],
+        distanceToDestination: Double? = nil,
+        totalRouteDistance: Double? = nil
     ) {
         guard let activity = currentActivity else { return }
         
@@ -103,7 +112,10 @@ class LiveActivityManager: ObservableObject {
             pace: pace,
             locationName: locationName,
             calories: calories,
-            paceHistory: finalPaceHistory
+            heartRate: heartRate,
+            paceHistory: finalPaceHistory,
+            distanceToDestination: distanceToDestination,
+            totalRouteDistance: totalRouteDistance
         )
         
         Task {
@@ -147,7 +159,10 @@ class LiveActivityManager: ObservableObject {
                     pace: activity.content.state.pace,
                     locationName: activity.content.state.locationName,
                     calories: activity.content.state.calories,
-                    paceHistory: activity.content.state.paceHistory
+                    heartRate: activity.content.state.heartRate,
+                    paceHistory: activity.content.state.paceHistory,
+                    distanceToDestination: activity.content.state.distanceToDestination,
+                    totalRouteDistance: activity.content.state.totalRouteDistance
                 )
                 
                 // End with immediate dismissal

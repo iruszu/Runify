@@ -19,7 +19,10 @@ struct RunifyWidgetAttributes: ActivityAttributes {
         var pace: Double // min/km
         var locationName: String
         var calories: Int? // calories burned (optional)
+        var heartRate: Int? // current heart rate in BPM (optional)
         var paceHistory: [Double] // Last 20 pace readings for chart
+        var distanceToDestination: Double? // Distance remaining to destination (in meters)
+        var totalRouteDistance: Double? // Total distance of planned route (in meters)
     }
 
     // Fixed non-changing properties about your activity go here!
@@ -30,127 +33,133 @@ struct RunifyWidgetAttributes: ActivityAttributes {
 struct RunifyWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: RunifyWidgetAttributes.self) { context in
-            // Lock screen/banner UI goes here
-            VStack(alignment: .leading, spacing: 10) {
-                // Header
-                HStack {
-                    Image(systemName: "figure.run")
-                        .font(.title3)
-                        .foregroundColor(.orange)
-                    Text("Runify")
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.orange)
+            // Lock screen/banner UI goes here - Native Apple style with time, distance, and HealthKit data
+            VStack(spacing: 12) {
+                // Main stats row - Time and Distance
+                HStack(spacing: 16) {
+                    // Time - left side
+                    VStack(alignment: .leading) {
+                        Text(formatTime(context.state.elapsedTime))
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .monospacedDigit()
+                            .foregroundColor(.primary)
+                        Text("Time")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    
                     Spacer()
-                    Text(formatTime(context.state.elapsedTime))
-                        .font(.headline)
-                        .fontWeight(.bold)
-                        .monospacedDigit()
-                        .foregroundColor(.orange)
+                    
+                    // Distance - right side
+                    VStack(alignment: .leading) {
+                        Text(formatDistance(context.state.distance))
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        Text("Distance")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 
-                Divider()
-                    .background(Color.orange.opacity(0.3))
-                
-                // Main stats row
-                HStack(spacing: 16) {
-                    // Distance
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Distance")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Text(formatDistance(context.state.distance))
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Pace
-                    VStack(alignment: .center, spacing: 2) {
-                        Text("Pace")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Text(formatPace(context.state.pace))
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundColor(.primary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Calories (if available)
-                    if let calories = context.state.calories {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text("Calories")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                            HStack(alignment: .firstTextBaseline, spacing: 2) {
+                // HealthKit data row - Heart Rate and Calories (if available)
+                if context.state.heartRate != nil || context.state.calories != nil {
+                    HStack(spacing: 16) {
+                        // Heart Rate
+                        if let heartRate = context.state.heartRate {
+                            HStack(spacing: 6) {
+                                Image(systemName: "heart.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.red)
+                                Text("\(heartRate)")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                Text("BPM")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                        
+                        Spacer()
+                        
+                        // Calories
+                        if let calories = context.state.calories {
+                            HStack(spacing: 6) {
+                                Image(systemName: "flame.fill")
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
                                 Text("\(calories)")
                                     .font(.title3)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.orange)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
                                 Text("kcal")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
                     }
-                }
-                
-                // Pace Chart
-                if !context.state.paceHistory.isEmpty {
-                    Chart {
-                        ForEach(Array(context.state.paceHistory.enumerated()), id: \.offset) { index, pace in
-                            LineMark(
-                                x: .value("Time", index),
-                                y: .value("Pace", pace > 0 ? pace : 0.0)
-                            )
-                            .foregroundStyle(.orange)
-                            .interpolationMethod(.catmullRom)
+                } else {
+                    // Alternative data row - Pace and Location (when HealthKit data not available)
+                    HStack(spacing: 16) {
+                        // Pace
+                        if context.state.pace > 0 {
+                            HStack(spacing: 6) {
+                                Image(systemName: "speedometer")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                                Text(formatPace(context.state.pace))
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                Text("min/km")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
                         }
-                    }
-                    .chartXAxis(.hidden)
-                    .chartYAxis(.hidden)
-                    .frame(height: 40)
-                    .padding(.vertical, 4)
-                }
-                
-                // Location and buttons row
-                HStack {
-                    HStack(spacing: 4) {
-                        Image(systemName: "location.fill")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                        Text(context.state.locationName)
-                            .font(.caption)
-                            .lineLimit(1)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Action buttons
-                    HStack(spacing: 8) {
-                        Button(intent: PauseRunIntent()) {
-                            Image(systemName: "pause.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.orange)
-                        }
-                        .buttonStyle(.plain)
                         
-                        Button(intent: StopRunIntent()) {
-                            Image(systemName: "stop.circle.fill")
-                                .font(.title3)
-                                .foregroundColor(.red)
+                        Spacer()
+                        
+                        // Location
+                        HStack(spacing: 6) {
+                            Image(systemName: "location.fill")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            Text(context.state.locationName)
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                                .lineLimit(1)
                         }
-                        .buttonStyle(.plain)
+                    }
+                }
+                
+                // Progress bar for planned route
+                if let distanceToDest = context.state.distanceToDestination,
+                   let totalDistance = context.state.totalRouteDistance,
+                   totalDistance > 0 {
+                    VStack(alignment: .leading, spacing: 4) {
+                        let progress = max(0, min(1, (totalDistance - distanceToDest) / totalDistance))
+                        
+                        ProgressView(value: progress)
+                            .tint(.orange)
+                            .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                        
+                        HStack {
+                            Text(String(format: "%.1f km", distanceToDest / 1000))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(String(format: "%.1f km", totalDistance / 1000))
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
             }
             .padding()
-            .activityBackgroundTint(Color.orange.opacity(0.1))
+            .activityBackgroundTint(Color.clear)
             .activitySystemActionForegroundColor(Color.orange)
 
         } dynamicIsland: { context in
@@ -249,25 +258,33 @@ extension RunifyWidgetAttributes {
 }
 
 extension RunifyWidgetAttributes.ContentState {
-    fileprivate static var running: RunifyWidgetAttributes.ContentState {
+    // Preview with HealthKit data (calories and heart rate)
+    fileprivate static var withHealthKit: RunifyWidgetAttributes.ContentState {
         RunifyWidgetAttributes.ContentState(
             distance: 2500,
             elapsedTime: 900,
             pace: 6.0,
             locationName: "Central Park",
             calories: 150,
-            paceHistory: [6.2, 6.1, 6.0, 5.9, 6.0, 6.1, 6.0, 5.8, 6.0, 6.1, 6.0, 5.9, 6.0]
+            heartRate: 145,
+            paceHistory: [6.2, 6.1, 6.0, 5.9, 6.0, 6.1, 6.0, 5.8, 6.0, 6.1, 6.0, 5.9, 6.0],
+            distanceToDestination: nil,
+            totalRouteDistance: nil
         )
     }
-     
-    fileprivate static var longerRun: RunifyWidgetAttributes.ContentState {
+    
+    // Preview without HealthKit data (shows pace and location instead)
+    fileprivate static var withoutHealthKit: RunifyWidgetAttributes.ContentState {
         RunifyWidgetAttributes.ContentState(
-            distance: 5000,
-            elapsedTime: 1800,
-            pace: 6.0,
+            distance: 3200,
+            elapsedTime: 1200,
+            pace: 6.25,
             locationName: "Riverside Trail",
-            calories: 320,
-            paceHistory: [6.5, 6.3, 6.2, 6.1, 6.0, 5.9, 6.0, 6.1, 6.0, 5.8, 6.0, 6.1, 6.0, 5.9, 6.0, 6.1, 6.0, 5.8, 6.0]
+            calories: nil,
+            heartRate: nil,
+            paceHistory: [6.5, 6.3, 6.2, 6.1, 6.0, 5.9, 6.0, 6.1, 6.0, 5.8, 6.0],
+            distanceToDestination: nil,
+            totalRouteDistance: nil
         )
     }
 }
@@ -275,6 +292,6 @@ extension RunifyWidgetAttributes.ContentState {
 #Preview("Notification", as: .content, using: RunifyWidgetAttributes.preview) {
    RunifyWidgetLiveActivity()
 } contentStates: {
-    RunifyWidgetAttributes.ContentState.running
-    RunifyWidgetAttributes.ContentState.longerRun
+    RunifyWidgetAttributes.ContentState.withHealthKit
+    RunifyWidgetAttributes.ContentState.withoutHealthKit
 }

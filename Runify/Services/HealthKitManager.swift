@@ -27,6 +27,9 @@ class HealthKitManager {
     // Activity rings data
     var activitySummary: HKActivitySummary?
     
+    // Current heart rate during workout
+    var currentHeartRate: Int? = nil
+    
     // MARK: - Initialization
     
     init() {
@@ -430,6 +433,48 @@ class HealthKitManager {
             Task { @MainActor in
                 self?.activitySummary = todaysSummary
             }
+        }
+        
+        healthStore.execute(query)
+    }
+    
+    // MARK: - Heart Rate
+    
+    /// Fetch current heart rate (most recent reading)
+    func fetchCurrentHeartRate(completion: @escaping (Int?) -> Void) {
+        guard let heartRateType = HKQuantityType.quantityType(forIdentifier: .heartRate) else {
+            completion(nil)
+            return
+        }
+        
+        // Get the most recent heart rate sample (within last 30 seconds)
+        let now = Date()
+        let startDate = now.addingTimeInterval(-30)
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: now,
+            options: .strictEndDate
+        )
+        
+        let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
+        
+        let query = HKSampleQuery(
+            sampleType: heartRateType,
+            predicate: predicate,
+            limit: 1,
+            sortDescriptors: [sortDescriptor]
+        ) { _, samples, error in
+            guard let sample = samples?.first as? HKQuantitySample else {
+                if let error = error {
+                    print("Heart rate query error: \(error.localizedDescription)")
+                }
+                completion(nil)
+                return
+            }
+            
+            let heartRateUnit = HKUnit.count().unitDivided(by: HKUnit.minute())
+            let heartRate = Int(sample.quantity.doubleValue(for: heartRateUnit))
+            completion(heartRate)
         }
         
         healthStore.execute(query)
